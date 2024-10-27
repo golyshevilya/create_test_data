@@ -1,6 +1,5 @@
 class Account:
     def __init__(self, **kwargs):
-        
         self.accNum: str = kwargs['customer_account']
         self.registerId: str = kwargs['customer_register_id']
 

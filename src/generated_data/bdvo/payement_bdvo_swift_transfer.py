@@ -13,9 +13,6 @@ class SwiftTransfer:
         self.remittanceInformation: str = None
         self.docNumber: str = None
         self.docDate: str = None
-        
-    
-                           
 
     def get_orderingCustomerAccount(self):
         return self.orderingCustomerAccount
@@ -76,4 +73,3 @@ class SwiftTransfer:
 
     def set_docDate(self, value):
         self.docDate = value
-

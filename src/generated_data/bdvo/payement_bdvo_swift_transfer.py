@@ -2,17 +2,27 @@ from config import config
 
 
 class SwiftTransfer:
-    def __init__(self):
-        self.orderingCustomerAccount: str = None
-        self.orderingCustomerName: str = None
-        self.orderingCustomerINN: str = None
-        self.orderingInstitutionName: str = None
-        self.orderingInstitutionSWIFT: str = None
-        self.orderingInstitutionBIC: str = None
+    def __init__(self, 
+                 sender_system: str, 
+                 customer_account: str, 
+                 customer_name: str, 
+                 customer_inn: str, 
+                 customer_bank_name: str, 
+                 customer_bank_swift: str,
+                 customer_bic: str, 
+                 operation_purpose: str,
+                 documnet_number: str,
+                 document_date: str):
+        self.orderingCustomerAccount: str = customer_account
+        self.orderingCustomerName: str = customer_name
+        self.orderingCustomerINN: str = customer_inn if sender_system == 'зачисления' else None
+        self.orderingInstitutionName: str = customer_bank_name
+        self.orderingInstitutionSWIFT: str = customer_bank_swift 
+        self.orderingInstitutionBIC: str = customer_bic if sender_system == 'зачисления' else None
         self.orderingInstitutionOption: str = None
-        self.remittanceInformation: str = None
-        self.docNumber: str = None
-        self.docDate: str = None
+        self.remittanceInformation: str = operation_purpose
+        self.docNumber: str = documnet_number if sender_system == 'зачисления' else None
+        self.docDate: str = document_date if sender_system == 'зачисления' else None
 
     def get_orderingCustomerAccount(self):
         return self.orderingCustomerAccount

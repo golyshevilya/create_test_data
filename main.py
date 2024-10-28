@@ -1,3 +1,4 @@
+import random
 from src.enrollment.body.enrollment_body import Enrollment
 from src.generated_data.bdvo.payement_bdvo import PaymentBDVO
 from src.generated_data.header.bdvo_header import BDVOHeader
@@ -5,6 +6,7 @@ from config import config
 import json
 import datetime
 import re
+import itertools
 
 
 def validation_and_prepare_input_data(
@@ -181,9 +183,16 @@ def validation_and_prepare_input_data(
 
 
 if __name__ == '__main__':
+    
+
+    # Validation and prepare data
     item = validation_and_prepare_input_data(direction='ЗАЧИСЛЕНИе')
     payment_header_enrollment = None
     payment_header_extract = None
+    payment_body_enrollment = None
+    payment_body_extract = None
+    
+    # Create Headers
     if item['sender_system'] == 'выписка+зачисления':
         payment_header_enrollment = BDVOHeader(sender_system=item['sender_system'].replace('выписка+', ''),
                                                direction=item['direction'],
@@ -193,12 +202,34 @@ if __name__ == '__main__':
                                             direction=item['direction'],
                                             is_transit_customer_account=item['is_transit_customer_account'],
                                             is_registry=item['is_registry'])
+ 
+        payment_body_enrollment = PaymentBDVO(kwargs=item)
+        # payment_body_extract = PaymentBDVO(item)
+    elif item['sender_system'] == 'выписка':
+        payment_header_extract = BDVOHeader(sender_system=item['sender_system'],
+                                            direction=item['direction'],
+                                            is_transit_customer_account=item['is_transit_customer_account'],
+                                            is_registry=item['is_registry'])
+        
+        payment_body_extract = PaymentBDVO(item)
+    elif item['sender_system'] == 'зачисления':
+        payment_header_enrollment = BDVOHeader(sender_system=item['sender_system'],
+                                               direction=item['direction'],
+                                               is_transit_customer_account=item['is_transit_customer_account'],
+                                               is_registry=item['is_registry'])
+        
+        payment_body_enrollment = PaymentBDVO(item)
+        
     if payment_header_extract is not None:
         print(payment_header_extract.to_JSON())
     if payment_header_enrollment is not None:
         print(payment_header_enrollment.to_JSON())
+    
+    if payment_body_enrollment is not None:
+        print(payment_body_enrollment.to_JSON())
+    if payment_body_extract is not None:
+        print(payment_body_extract.to_JSON())
 
-    # payment_body = PaymentBDVO(direction='Зачисления')
 
     # enrollment_body = Enrollment(request_id = '123', operation_date='2024-10-10', customer_account='91827364658128102297')
     # print(enrollment_body)д
@@ -261,3 +292,6 @@ if __name__ == '__main__':
     #
     # with open("temp_res.json", 'w', encoding='utf-8') as my_file:
     #     my_file.write(json.dumps(result, ensure_ascii=False))
+
+
+    

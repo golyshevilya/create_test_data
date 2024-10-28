@@ -17,13 +17,13 @@ class BDVOHeader:
         self.registerId: str = str(random.randint(1000000000000000000, 9999999999999999999))
         self.divisionId: str = str(division_id if division_id else random.randint(10000000000, 99999999999))
         self.srcModule: str = 'crediting-payment' if sender_system == 'зачисления' else None
-        self.evtId: str = self.create_uuid(type='evtId')
-        self.sndDate: str = str(datetime.datetime.today().strftime('%Y-%m-%dT%H:%M:%S'))
+        self.evtId: str = self.create_uuid(type='evtId') if sender_system == 'зачисления' else None
+        self.sndDate: str = str(datetime.datetime.today().strftime('%Y-%m-%dT%H:%M:%S')) if sender_system == 'зачисления' else None
         self.epkId: str = epk_id if epk_id else str(random.randint(1000000000000000000, 9999999999999999999))
         self.requestId: str = self.create_uuid(type='requestId')
         self.sendServiceId: str = self.create_uuid(type='sendServiceId')
         self.docGuid: str = self.create_uuid(type='docGuid')
-        self.kindDoc: str = random.choice(['01', '02', '06', '16', 'CRED', None])
+        self.kindDoc: str = random.choice(['01', '02', '06', '16', 'CRED', None]) if sender_system == 'зачисления' else None
         self.accountType: str = self.create_transition_account(is_transit_customer_account=is_transit_customer_account,
                                                                sender_system=sender_system)
         self.sourceData: str = 'CREDITING-PAYMENT' if sender_system == 'зачисления' else 'STATEMENT-LEGAL-ENTITY'
@@ -39,7 +39,7 @@ class BDVOHeader:
     @staticmethod
     def create_transition_account(is_transit_customer_account: str, sender_system: str) -> str:
         if sender_system == 'выписка':
-            return ''
+            return None
         if is_transit_customer_account == 'рандом':
             return 'LegalSettlementTransitAccountRegisterType' if random.randint(0,
                                                                                  1) == 0 else 'LegalSettlementCheckingAccountRegisterType'

@@ -24,6 +24,17 @@ class SwiftTransfer:
         self.docNumber: str = documnet_number if sender_system == 'зачисления' else None
         self.docDate: str = document_date if sender_system == 'зачисления' else None
 
+    def to_JSON(self):
+        result_dict = {}
+        for key, value in self.__dict__.items():
+            if not key.startswith('__'):
+                try:
+                    result_dict[key] = value.to_JSON()
+                except:
+                    result_dict[key] = value
+                    continue
+        return result_dict
+    
     def get_orderingCustomerAccount(self):
         return self.orderingCustomerAccount
 

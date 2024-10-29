@@ -13,6 +13,7 @@ import json
 class PaymentBDVO:
     def __init__(self, **kwargs):
         kwargs = kwargs['kwargs']
+        print(kwargs)
         self.__faker__ = faker.Faker()
         
         self.__customer_account__ = self.create_account(
@@ -23,7 +24,7 @@ class PaymentBDVO:
             is_client_acccount=True
         )
         
-        self.__customer_name__ = self.create_person_name()
+        self.__customer_name__ = self.create_person_name(is_client=True)
         self.__customer_inn__ = self.create_inn()
         self.__customer_bank_name__ = random.choice(config.bank_names)
         self.__customer_bank_swift__ = self.__faker__.swift()
@@ -33,6 +34,28 @@ class PaymentBDVO:
         self.__operation__purpose__ = self.create_purpose(is_vo_code=False if random.randint(0,1)==0 else True, is_registry=self.__is_registry__)
         self.__document_number__ = random.randint(100000, 999999999)
         self.__document_date__ = str(self.__faker__.date_between(start_date='-10d', end_date='now'))
+        
+        self.__document_amount__ = round((random.random() * random.randint(10, 10000000)), 2)
+        self.__document_currency__, self.__document_currency_code__ = self.create_document_currnecy(operation_currency=kwargs['operation_currency'])
+        self.__amount_national__ = round((random.random() * random.randint(10, 10000000)), 2)
+        self.__payment_code__ = kwargs['payment_code'] if kwargs['payment_code'] != 'CRED' else '01'
+        self.__amount_in_account_currency__ = round((random.random() * random.randint(10, 10000000)), 2)
+        self.__account_currency__, self.__account_currency_code__ = self.create_account_currency(self.__customer_account__)
+        self.__customer_kpp__ = str(random.randint(100000000, 999999999))
+        
+        self.__counter_account__ = self.create_account(
+            is_resident=self.create_is_resident(customer=kwargs['counter']),
+            is_transint=False,
+            account_lenght=20,
+            currency_code=self.create_customer_currency(customer_currency='рандом'),
+            is_client_acccount=False
+        )
+        self.__counter_name__ = self.create_person_name(is_client=False)
+        self.__counter_inn__ = self.create_inn()
+        self.__counter_bank_name__ = random.choice(config.bank_names)
+        self.__counter_bank_swift__ = self.__faker__.swift()
+        self.__counter_kpp__ = str(random.randint(100000000, 999999999))
+        self.__counter_bank_bic__ = random.randint(100000000, 999999999)
         
         
         self.swiftTransfer: SwiftTransfer = SwiftTransfer(
@@ -47,19 +70,127 @@ class PaymentBDVO:
             documnet_number=self.__document_number__, 
             document_date=self.__document_date__
         )
-        self.operation: Operation = Operation()
-        self.payer: Payer = Payer()
-        self.payee: Payee = Payee()
-        self.correspondence: Correspondece = Correspondece()
-        self.objectVersions: ObjectVersions = ObjectVersions()
+        self.operation: Operation = Operation(
+            sender_system=kwargs['sender_system'],
+            document_date=self.__document_date__,
+            document_number=self.__document_number__,
+            document_amount=self.__document_amount__,
+            document_currency = self.__document_currency__,
+            document_currency_code = self.__document_currency_code__,
+            amount_national=self.__amount_national__,
+            purpose=self.__operation__purpose__,
+            currency_operation_code=self.__currency_operation_code__,
+            divisionId=kwargs['division_id'],
+            direction=kwargs['direction'],
+            payment_code=self.__payment_code__
+        )
+        if kwargs['sender_system'] == 'выписка':
+            if kwargs['direction'] == '0':
+                self.payee: Payee = Payee(
+                    # customer
+                    name=self.__customer_name__,
+                    account=self.__customer_account__,
+                    amount=self.__amount_in_account_currency__,
+                    account_digital_curency_code=self.__account_currency_code__,
+                    account_currency_code=self.__account_currency__,
+                    inn=self.__customer_inn__,
+                    kpp=self.__customer_kpp__,
+                    bank_bic=self.__customer_bank_bic__,
+                    bank_name=self.__customer_bank_name__
+                )
+                self.payer: Payer = Payer(
+                    # counter
+                    name=self.__counter_name__,
+                    account=self.__counter_account__,
+                    amount=self.__amount_in_account_currency__,
+                    inn=self.__counter_inn__,
+                    kpp=self.__counter_kpp__,
+                    bank_bic=self.__counter_bank_bic__,
+                    bank_name=self.__counter_bank_name__
+                )
+            else:
+                self.payee: Payee = Payee(
+                    # counter
+                    name=self.__counter_name__,
+                    account=self.__counter_account__,
+                    amount=self.__amount_in_account_currency__,
+                    account_digital_curency_code=None,
+                    account_currency_code=None,
+                    inn=self.__counter_inn__,
+                    kpp=self.__counter_kpp__,
+                    bank_bic=self.__counter_bank_bic__,
+                    bank_name=self.__counter_bank_name__
+                )
+                self.payer: Payer = Payer(
+                    # customer
+                    name=self.__customer_name__,
+                    account=self.__customer_account__,
+                    amount=self.__amount_in_account_currency__,
+                    inn=self.__customer_inn__,
+                    kpp=self.__customer_kpp__,
+                    bank_bic=self.__customer_bank_bic__,
+                    bank_name=self.__customer_bank_name__
+                )
+        else:
+            self.payee: Payee = Payee(
+                # customer
+                name=self.__customer_name__,
+                account=self.__customer_account__,
+                amount=self.__amount_in_account_currency__,
+                account_digital_curency_code=self.__account_currency_code__,
+                account_currency_code=self.__account_currency__,
+                inn=self.__customer_inn__,
+                kpp=self.__customer_kpp__,
+                bank_bic=self.__customer_bank_bic__,
+                bank_name=self.__customer_bank_name__
+            )
+            self.payer: Payer = Payer(
+                # counter
+                name=self.__counter_name__,
+                account=self.__counter_account__,
+                amount=self.__amount_in_account_currency__,
+                inn=self.__counter_inn__,
+                kpp=self.__counter_kpp__,
+                bank_bic=self.__counter_bank_bic__,
+                bank_name=self.__counter_bank_name__
+            )
+
+        self.correspondence: Correspondece = Correspondece(sender_system=kwargs['sender_system'])
+        self.objectVersions: ObjectVersions = ObjectVersions(sender_system=kwargs['sender_system'])
         
         
     def to_JSON(self):
+        result_dict = {}
+        for key, value in self.__dict__.items():
+            if not key.startswith('__') and not callable(key):
+                try:
+                    result_dict[key] = value.to_JSON()
+                except:
+                    result_dict[key] = value
+                    continue
         return json.dumps(
-            self,
-            default=lambda o: o.__dict__,
-            sort_keys=True,
-            indent=4)
+            result_dict,
+            sort_keys=False,
+            indent=4,
+            ensure_ascii=False)
+    
+    def create_account_currency(self, account):
+        print(account, account[6-9])
+        for key, value in config.dict_currency.items():
+            if value == account[6-9]:
+                return key, value
+        return None, None
+    
+    def create_document_currnecy(self, operation_currency):
+        if operation_currency == 'рандом':
+            key = random.choice(list(config.dict_currency.keys()))
+            return key, config.dict_currency[key]        
+        elif operation_currency == 'рубли':
+            key = random.choice(['RUB', 'RUR'])
+            return key, config.dict_currency[key]
+        else:
+            key = random.choice(itertools.islice(config.dict_currency.values(), len(config.dict_currency)-2))
+            return key, config.dict_currency[key]
     
     @staticmethod    
     def create_is_registry(is_registry: str):
@@ -142,8 +273,11 @@ class PaymentBDVO:
     
 
     @staticmethod
-    def create_person_name():
-        return random.choice(config.list_legal_forms) + ' ' + '"' + random.choice(config.list_legal_names) + '"'
+    def create_person_name(is_client: bool = False):
+        if is_client:
+            return random.choice(config.list_legal_forms) + ' ' + '"' + random.choice(config.list_legal_names) + '"'
+        else: 
+            return random.choice(config.list_legal_forms) + ' ' + '"' + random.choice(config.list_legal_names) + ' КОНТРАГЕНТ"'
     
     @staticmethod
     def create_customer_currency(customer_currency: str):
@@ -172,9 +306,7 @@ class PaymentBDVO:
             return True
         else:
             return False
-        
-    def create_direction(self, direction: str, creator_system: str):
-        pass
+            
 
     @staticmethod
     def create_account(is_resident: bool = True,

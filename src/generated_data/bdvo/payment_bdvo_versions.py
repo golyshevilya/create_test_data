@@ -1,8 +1,8 @@
 class Version:
-    def __init__(self):
-        self.action: str = None
-        self.version: int = None
-
+    def __init__(self, action: str, version: str):
+        self.action: str = action
+        self.version: int = version
+    
     def get_action(self):
         return self.action
 

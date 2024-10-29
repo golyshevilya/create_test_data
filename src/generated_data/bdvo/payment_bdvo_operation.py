@@ -1,24 +1,67 @@
+import faker
+import datetime
+import random
+
 class Operation:
-    def __init__(self):
-        self.status: str = None
-        self.date: str = None
-        self.documentDate: str = None
-        self.documentNumber: str = None
-        self.documentAmount: float = None
-        self.documentCurrencyCode: int = None
-        self.documentCurrency: str = None
-        self.amountNational: float = None
-        self.purpose: str = None
-        self.purposeCode: str = None
-        self.voCode: str = None
+    def __init__(self, 
+                 sender_system: str,
+                 document_date: str, 
+                 document_number: str,
+                 document_amount: float,
+                 document_currency: str,
+                 document_currency_code: int,
+                 amount_national: float,
+                 purpose: str,
+                 currency_operation_code: str,
+                 divisionId: str,
+                 direction: str,
+                 payment_code: str
+                ):
+        
+        self.__faker__ = faker.Faker()
+        
+        self.status = None
+        self.create_status(sender_system=sender_system)
+        
+        self.date: str = datetime.datetime.today().strftime('%Y-%m-%d')
+        self.documentDate: str = document_date
+        self.documentNumber: str = document_number
+        self.documentAmount: float = document_amount
+        self.documentCurrencyCode: int = document_currency_code
+        self.documentCurrency: str = document_currency
+        self.amountNational: float = amount_national
+        self.purpose: str = purpose
+        self.purposeCode: str = random.randint(1, 100000)
+        self.voCode: str = currency_operation_code
         self.payingCondition: str = None
         self.payingConditionDate: str = None
-        self.bankBranchCode: str = None
-        self.departmentCode: str = None
-        self.direction: int
-        self.paymentCode: str = None
-        self.receiptDateToBank: str = None
+        self.bankBranchCode, self.departmentCode = self.create_tb_and_department_code(divisionId=divisionId, sender_system=sender_system)
+        self.direction: int = direction
+        self.paymentCode: str = payment_code
+        self.receiptDateToBank: str = str(self.__faker__.date_between(start_date='-1d', end_date='now'))
 
+    
+    def create_tb_and_department_code(self, divisionId: str, sender_system: str):
+        if sender_system == 'выписка':
+            return divisionId[0:2], divisionId
+        else:
+            return divisionId[0:2], None
+    
+    def create_status(self, sender_system: str):
+        if sender_system == 'зачисления':
+            self.status = 'EXECUTED'
+
+    def to_JSON(self):
+        result_dict = {}
+        for key, value in self.__dict__.items():
+            if not key.startswith('__') and not callable(key):
+                try:
+                    result_dict[key] = value.to_JSON()
+                except:
+                    result_dict[key] = value
+                    continue
+        return result_dict
+    
     def get_status(self):
         return self.status
 

@@ -1,9 +1,8 @@
 from config import config
-
+import random
 
 class SwiftTransfer:
     def __init__(self, 
-                 sender_system: str, 
                  customer_account: str, 
                  customer_name: str, 
                  customer_inn: str, 
@@ -15,14 +14,14 @@ class SwiftTransfer:
                  document_date: str):
         self.orderingCustomerAccount: str = customer_account
         self.orderingCustomerName: str = customer_name
-        self.orderingCustomerINN: str = customer_inn if sender_system == 'зачисления' else None
+        self.orderingCustomerINN: str = customer_inn
         self.orderingInstitutionName: str = customer_bank_name
         self.orderingInstitutionSWIFT: str = customer_bank_swift 
-        self.orderingInstitutionBIC: str = customer_bic if sender_system == 'зачисления' else None
-        self.orderingInstitutionOption: str = None
+        self.orderingInstitutionBIC: str = customer_bic
+        self.orderingInstitutionOption: str = random.choice(['A', 'B'])
         self.remittanceInformation: str = operation_purpose
-        self.docNumber: str = documnet_number if sender_system == 'зачисления' else None
-        self.docDate: str = document_date if sender_system == 'зачисления' else None
+        self.docNumber: str = documnet_number 
+        self.docDate: str = document_date
 
     def to_JSON(self):
         result_dict = {}

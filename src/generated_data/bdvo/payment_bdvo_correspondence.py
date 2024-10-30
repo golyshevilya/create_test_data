@@ -1,15 +1,19 @@
+from config import config
+
 class Correspondece:
     def __init__(self,
-                 sender_system: str):
-        self.__sender_system__: str = sender_system
-        self.accountDate: str = None
-        self.accountAmount: str = None
-        self.accountCurrency: str = None
-        self.debitAccount: str = None
+                 date: str,
+                 amount: str,
+                 currency: str,
+                 account: str,
+                 is_correspondence: bool = False):
+        self.__is_correspondence__ = is_correspondence
+        self.accountDate: str = date
+        self.accountAmount: str = amount
+        self.accountCurrency: str = self.create_currency(currency_code=currency)
+        self.debitAccount: str = account
 
     def to_JSON(self):
-        if self.__sender_system__ == 'выписка':
-            return None
         result_dict = {}
         for key, value in self.__dict__.items():
             if not key.startswith('__') and not callable(key):
@@ -19,6 +23,11 @@ class Correspondece:
                     result_dict[key] = value
                     continue
         return result_dict
+    
+    def create_currency(self, currency_code: str):
+        for key, value in config.dict_currency.items():
+            if value == currency_code:
+                return key
     
     def get_accountDate(self):
         return self.accountDate

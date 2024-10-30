@@ -3,6 +3,8 @@ account_not_resident_masks = [40807, 40818, 40827, 40829, 40830, 40832, 30430, 3
                               40805, 40806, 40809, 40812, 40813, 40814, 40815, 40820, 426, 425, 440, 316, 314, 40902,
                               40834, 40835, 40824, 40829]
 account_not_resident_masks_extra_condition = [40827, 40830, 40832, 40829]
+account_correspondence = ['30101', '30104', '30125']
+
 not_supported_currency_operation_codes = ['01010', '01020', '01030', 'VO01010', 'VO01020', 'VO01030', 'V001010',
                                           'V001020', 'V001030']
 dict_currency = {

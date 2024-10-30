@@ -4,7 +4,6 @@ import random
 
 class Operation:
     def __init__(self, 
-                 sender_system: str,
                  document_date: str, 
                  document_number: str,
                  document_amount: float,
@@ -20,9 +19,7 @@ class Operation:
         
         self.__faker__ = faker.Faker()
         
-        self.status = None
-        self.create_status(sender_system=sender_system)
-        
+        self.status = random.choice(['EXECUTED', 'REJECTED', 'SENT_EKS'])
         self.date: str = datetime.datetime.today().strftime('%Y-%m-%d')
         self.documentDate: str = document_date
         self.documentNumber: str = document_number
@@ -35,21 +32,11 @@ class Operation:
         self.voCode: str = currency_operation_code
         self.payingCondition: str = None
         self.payingConditionDate: str = None
-        self.bankBranchCode, self.departmentCode = self.create_tb_and_department_code(divisionId=divisionId, sender_system=sender_system)
+        self.bankBranchCode, self.departmentCode = divisionId[0:2], divisionId
         self.direction: int = direction
         self.paymentCode: str = payment_code
         self.receiptDateToBank: str = str(self.__faker__.date_between(start_date='-1d', end_date='now'))
 
-    
-    def create_tb_and_department_code(self, divisionId: str, sender_system: str):
-        if sender_system == 'выписка':
-            return divisionId[0:2], divisionId
-        else:
-            return divisionId[0:2], None
-    
-    def create_status(self, sender_system: str):
-        if sender_system == 'зачисления':
-            self.status = 'EXECUTED'
 
     def to_JSON(self):
         result_dict = {}

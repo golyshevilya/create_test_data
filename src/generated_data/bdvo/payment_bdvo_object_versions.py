@@ -4,11 +4,13 @@ from src.generated_data.bdvo.payment_bdvo_mt_currency import MTCurrency
 import random
 
 class ObjectVersions:
-    def __init__(self, sender_system: str, is_versions_similar: bool = False, action_doc_data: str = 'insert', action_turn: str = 'insert', action_mt_currency: str = 'insert'):
+    def __init__(self, 
+                 is_versions_similar: bool = False,
+                 action_doc_data: str = 'insert', 
+                 action_turn: str = 'insert', 
+                 action_mt_currency: str = 'insert'
+                ):
         
-        
-        
-        self.__sender_system__ = sender_system
         self.__version_doc_data__, self.__version__turn__, self.__version__mt_currency__ = self.create_versions(is_versions_similar=is_versions_similar)
         
         self.turnId = 'shard%s:%s'%(random.randint(0,5), random.randint(1000000000000000000, 9999999999999999999))
@@ -28,8 +30,6 @@ class ObjectVersions:
         
 
     def to_JSON(self):
-        if self.__sender_system__ != 'выписка':
-            return None
         result_dict = {}
         for key, value in self.__dict__.items():
             if not key.startswith('__') and not callable(key):

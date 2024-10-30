@@ -224,33 +224,36 @@ if __name__ == '__main__':
         item['division_id'] = payment_header_enrollment.get_divisionId()
         item['payment_code'] = payment_header_enrollment.get_kindDoc()
         payment_body_enrollment = PaymentBDVO(kwargs=item)
-        item['sender_system'] = 'выписка'
+        item['object'] = payment_body_enrollment
+        item['sender_system_input'] = 'зачисления'
+        item['sender_system_result'] = 'выписка'
         payment_body_extract = PaymentBDVO(kwargs=item)
-    elif item['sender_system'] == 'выписка':
-        payment_header_extract = BDVOHeader(sender_system=item['sender_system'],
-                                            direction=item['direction'],
-                                            is_transit_customer_account=item['is_transit_customer_account'],
-                                            is_registry=item['is_registry'])
+    # elif item['sender_system'] == 'выписка':
+    #     payment_header_extract = BDVOHeader(sender_system=item['sender_system'],
+    #                                         direction=item['direction'],
+    #                                         is_transit_customer_account=item['is_transit_customer_account'],
+    #                                         is_registry=item['is_registry'])
         
-        payment_body_extract = PaymentBDVO(kwargs=item)
-    elif item['sender_system'] == 'зачисления':
-        payment_header_enrollment = BDVOHeader(sender_system=item['sender_system'],
-                                               direction=item['direction'],
-                                               is_transit_customer_account=item['is_transit_customer_account'],
-                                               is_registry=item['is_registry'])
+    #     payment_body_extract = PaymentBDVO(kwargs=item)
+    # elif item['sender_system'] == 'зачисления':
+    #     payment_header_enrollment = BDVOHeader(sender_system=item['sender_system'],
+    #                                            direction=item['direction'],
+    #                                            is_transit_customer_account=item['is_transit_customer_account'],
+    #                                            is_registry=item['is_registry'])
         
-        payment_body_enrollment = PaymentBDVO(kwargs=item)
+    #     payment_body_enrollment = PaymentBDVO(kwargs=item)
         
     if payment_header_extract is not None:
-        print(payment_header_extract.to_JSON())
+        print('Header_extract = ', payment_header_extract.to_JSON())
     if payment_header_enrollment is not None:
-        print(payment_header_enrollment.to_JSON())
+        print('Header_enrollment = ', payment_header_enrollment.to_JSON())
     
     if payment_body_enrollment is not None:
-        print(payment_body_enrollment.to_JSON())
+        print('Body_enrollment = ', payment_body_enrollment.to_JSON())
     if payment_body_extract is not None:
-        print(payment_body_extract.to_JSON())
+        print('Body_extract = ', payment_body_extract.to_JSON())
 
+    
 
     # enrollment_body = Enrollment(request_id = '123', operation_date='2024-10-10', customer_account='91827364658128102297')
     # print(enrollment_body)д

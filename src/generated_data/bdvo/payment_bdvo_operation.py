@@ -19,7 +19,7 @@ class Operation:
         
         self.__faker__ = faker.Faker()
         
-        self.status = random.choice(['EXECUTED', 'REJECTED', 'SENT_EKS'])
+        self.status = None
         self.date: str = datetime.datetime.today().strftime('%Y-%m-%d')
         self.documentDate: str = document_date
         self.documentNumber: str = document_number

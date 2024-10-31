@@ -2,11 +2,12 @@ import random
 from src.enrollment.body.enrollment_body import Enrollment
 from src.generated_data.bdvo.payement_bdvo import PaymentBDVO
 from src.generated_data.header.bdvo_header import BDVOHeader
-from config import config
+from config import config, user_config
 import json
 import datetime
 import re
-import itertools
+import os
+import shutil
 
 
 def validation_and_prepare_input_data(
@@ -28,8 +29,7 @@ def validation_and_prepare_input_data(
         terbank: str = 'рандом',
         department_code: str = 'рандом',
         sender_system: str = 'выписка+зачисления',
-        only_bdvo_params: str = 'рандом',
-        generate_count: int = 1
+        only_bdvo_params: str = 'рандом'
 ):
     direction = direction.lower()
     customer = customer.lower()
@@ -155,9 +155,6 @@ def validation_and_prepare_input_data(
             only_bdvo_params in ('да', 'нет', 'рандом')
     ), 'Наличие неиспользуемых в БДВО параметров(only_bdvo_params) переданно не корректно, получено - %s, ожидалось - да, нет или рандом.' % only_bdvo_params
 
-    assert (
-            generate_count > 0
-    ), 'Количество примеров(generate_count) переданно не корректно, получено - %s, ожидалось - значение больше 0.' % generate_count
 
     return {
         'direction': direction,
@@ -182,76 +179,200 @@ def validation_and_prepare_input_data(
     }
 
 def create_direction(direction: str, sender_system: str):
-    if sender_system == 'выпиcка':
-        if direction == 'рандом':
-            return str(random.randint(0,1))
-        elif direction == 'зачисление':
-            return '0' 
-        else: 
-            return '1'
-    elif sender_system == 'зачисления':
-        if direction == 'рандом':
-            return random.randint(1,2)
-        elif direction == 'зачисление':
-            return '1' 
-        else: 
-            return '2'   
+    if sender_system == 'выписка+зачисления':
+        return '1'
+    if direction == 'рандом':
+        return '1' if random.randint(1,2) == 1 else '2'
+    elif direction == 'зачисление':
+        return '1'
+    else: 
+        return '2'
     
+def convert_message_for_direction(header: BDVOHeader, body: PaymentBDVO, is_correspondence_account: str):
+    print('*'*30)
+    print('INPUT HEADER = ', header.to_JSON())
+    print('*'*30)
+    print('INPYT BODY = ', body.to_JSON())
+    print('*'*30)
+    header_enrollment = json.loads(header.to_JSON())
+    header_extract = json.loads(header.to_JSON())
+    body_enrollment = json.loads(body.to_JSON())
+    body_extract =  json.loads(body.to_JSON())
+    
+    # Header enrollment
+    header_enrollment['sourceData'] = 'CREDITING-PAYMENT'
+    
+    # Header extract
+    header_extract.pop('srcModule')
+    header_extract.pop('evtId')
+    header_extract.pop('sndDate')
+    header_extract.pop('kindDoc')
+    header_extract.pop('accountType')
+    header_extract['sourceData'] = 'STATEMENT-LEGAL-ENTITY'
+    
+    # Body enrollment
+    body_enrollment['operation']['status'] = random.choice(['EXECUTED', 'REJECTED', 'SENT_EKS'])
+    body_enrollment['operation']['documentCurrency'] = None
+    body_enrollment['operation']['departmentCode'] = None
+    body_enrollment['payer']['kpp'] = None
+    body_enrollment['payee']['inn'] = None
+    body_enrollment['payee']['kpp'] = None
+    body_enrollment['payee']['bankBic'] = None
+    body_enrollment['payee']['bankName'] = None
+    body_enrollment['objectVersions'] = None
+    body_enrollment['swiftTransfer']['orderingInstitutionOption'] = None
+    if is_correspondence_account == 'рандом':
+        if random.randint(0,1) == 0:
+            body_enrollment['correspondence'] = None 
+    elif is_correspondence_account == 'нет':
+        body_enrollment['correspondence'] = None
+        
+    # Body extract
+    body_extract['operation']['status'] = body_extract['objectVersions']['docData']['action']
+    body_extract['operation']['status'] = '0'
+    body_extract['operation']['documentCurrencyCode'] = None
+    body_extract['payee']['accountDigitalCurrencyCode'] = None
+    body_extract['payee']['accountCurrencyCode'] = None
+    body_extract['payee']['bankBic'] = None
+    body_extract['payee']['bankName'] = None
+    body_extract['correspondence'] = None 
+    body_extract['swiftTransfer']['orderingCustomerINN'] = None
+    body_extract['swiftTransfer']['orderingInstitutionBIC'] = None
+    body_extract['swiftTransfer']['docNumber'] = None
+    body_extract['swiftTransfer']['docDate'] = None
+    
+    print('ENROLMENT HEADER = ', json.dumps(header_enrollment, indent=4, sort_keys=True, ensure_ascii=False))
+    print('*'*30)
+    print('EXTRACT HEADER = ', json.dumps(header_extract, indent=4, sort_keys=True, ensure_ascii=False))
+    print('*'*30)
+    print('ENROLMENT BODY = ', json.dumps(body_enrollment, indent=4, sort_keys=True, ensure_ascii=False))
+    print('*'*30)
+    print('EXTRACT BODY = ', json.dumps(body_extract, indent=4, sort_keys=True, ensure_ascii=False))
+    return header_enrollment, header_extract, body_enrollment, body_extract
 
+def remove_result_dir():
+    if os.path.isdir(os.path.join(os.getcwd(), config.directory_to_save)):
+        shutil.rmtree(os.path.join(os.getcwd(), config.directory_to_save))
+        
+def write_to_file(message: dict, name: str):
+    with open('%s.json' % name, 'w') as file:
+        file.write(json.dumps(message, indent=4, ensure_ascii=False))
 
+def save_result(messages: tuple, sender_system: str):
+    
+    os.makedirs(os.path.join(os.getcwd(), config.directory_to_save, messages[0]['sendServiceId']))
+
+    if sender_system == 'выписка+зачисления':
+        enrollment_path = os.path.join(
+            os.getcwd(), 
+            config.directory_to_save,
+            messages[0]['sendServiceId'], 
+            'enrollment'
+        )
+        extract_path = os.path.join(
+            os.getcwd(), 
+            config.directory_to_save, 
+            messages[0]['sendServiceId'], 
+            'extract'
+        )
+        os.makedirs(enrollment_path)
+        os.makedirs(extract_path)
+        write_to_file(
+            message=messages[0], 
+            name=os.path.join(enrollment_path, 'header')
+        )
+        write_to_file(
+            message=messages[1], 
+            name=os.path.join(extract_path, 'header')
+        )
+        write_to_file(
+            message=messages[2], 
+            name=os.path.join(enrollment_path, 'body')
+        )
+        write_to_file(
+            message=messages[3], 
+            name=os.path.join(extract_path, 'body')
+        )
+    
+def check_user_params():
+    """_summary_
+
+    Raises:
+        ValueError: _description_
+        ValueError: _description_
+
+    Returns:
+        True: if all checks were success
+    """
+    for key, value in user_config.__dict__.items():
+        if key.__contains__('main_') and value is None:
+            raise ValueError('Некорректное заполнение основыных параметров: параметр %s имеет значение %s, пожалуйста поправьте!' % (key, value))
+
+    dict_manual_params = {}
+    if user_config.main_is_manual_params:
+        for key, value in user_config.__dict__.items():
+            if not key.__contains__('main_') and not key.startswith('__') and value not in [None, '', 0.00]:
+                dict_manual_params[key] = value 
+    if not dict_manual_params and user_config.main_is_manual_params:
+        raise ValueError('Некорректное заполнение дополнительных параметров: '
+                         'флаг включения дополнительных параметров main_is_manual_params = True, но не один из параметров не заполнен. '
+                         'Пожалуйста поправьте!')
+
+    return True               
+    
+    
 if __name__ == '__main__':
     
-
+    remove_result_dir()
+    check_user_params()
+    
     # Validation and prepare data
-    item = validation_and_prepare_input_data(direction='ЗАЧИСЛЕНИе')
-    payment_header_enrollment = None
-    payment_header_extract = None
-    payment_body_enrollment = None
-    payment_body_extract = None
+    list_for_geniration = []
     
-    # Create Headers
-    if item['sender_system'] == 'выписка+зачисления':
-        payment_header_enrollment = BDVOHeader(sender_system=item['sender_system'].replace('выписка+', ''),
-                                               direction=item['direction'],
-                                               is_transit_customer_account=item['is_transit_customer_account'],
-                                               is_registry=item['is_registry'])
-        payment_header_extract = BDVOHeader(sender_system=item['sender_system'].replace('+зачисления', ''),
-                                            direction=item['direction'],
+    
+    
+    for _ in range(user_config.main_count_examples):
+        list_for_geniration.append(
+            validation_and_prepare_input_data(
+                direction='зачисление' if user_config.main_action
+            )
+        )
+        
+    for item in list_for_gen:
+        payment_header_raw = None
+        payment_body_raw = None
+        
+        # Create Headers
+        payment_header_raw = BDVOHeader(    direction=item['direction'],
                                             is_transit_customer_account=item['is_transit_customer_account'],
-                                            is_registry=item['is_registry'])
-        item['sender_system'] = 'зачисления'
+                                            is_registry=item['is_registry']
+                                        )
         item['direction'] = create_direction(direction=item['direction'], sender_system=item['sender_system'])
-        item['division_id'] = payment_header_enrollment.get_divisionId()
-        item['payment_code'] = payment_header_enrollment.get_kindDoc()
-        payment_body_enrollment = PaymentBDVO(kwargs=item)
-        item['object'] = payment_body_enrollment
-        item['sender_system_input'] = 'зачисления'
-        item['sender_system_result'] = 'выписка'
-        payment_body_extract = PaymentBDVO(kwargs=item)
-    # elif item['sender_system'] == 'выписка':
-    #     payment_header_extract = BDVOHeader(sender_system=item['sender_system'],
-    #                                         direction=item['direction'],
-    #                                         is_transit_customer_account=item['is_transit_customer_account'],
-    #                                         is_registry=item['is_registry'])
+        item['division_id'] = payment_header_raw.get_divisionId()
+        item['payment_code'] = payment_header_raw.get_kindDoc()
         
-    #     payment_body_extract = PaymentBDVO(kwargs=item)
-    # elif item['sender_system'] == 'зачисления':
-    #     payment_header_enrollment = BDVOHeader(sender_system=item['sender_system'],
-    #                                            direction=item['direction'],
-    #                                            is_transit_customer_account=item['is_transit_customer_account'],
-    #                                            is_registry=item['is_registry'])
+        # Create body
+        payment_body_raw = PaymentBDVO(kwargs=item)
+
+        # Convert to format for sender system 
+        result_enrollment_header, result_extract_header, result_enrollment_body, result_extract_body = convert_message_for_direction(
+            header=payment_header_raw, 
+            body=payment_body_raw,
+            is_correspondence_account=item['is_correspondence_account']
+        )
         
-    #     payment_body_enrollment = PaymentBDVO(kwargs=item)
-        
-    if payment_header_extract is not None:
-        print('Header_extract = ', payment_header_extract.to_JSON())
-    if payment_header_enrollment is not None:
-        print('Header_enrollment = ', payment_header_enrollment.to_JSON())
+        # save to result
+        save_result(
+            messages=(result_enrollment_header, result_extract_header, result_enrollment_body, result_extract_body),
+            sender_system=item['sender_system']
+        )
+    '''
+
     
-    if payment_body_enrollment is not None:
-        print('Body_enrollment = ', payment_body_enrollment.to_JSON())
-    if payment_body_extract is not None:
-        print('Body_extract = ', payment_body_extract.to_JSON())
+
+
+    
+
 
     
 

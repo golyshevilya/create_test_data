@@ -15,15 +15,15 @@ class ObjectVersions:
         
         self.turnId = 'shard%s:%s'%(random.randint(0,5), random.randint(1000000000000000000, 9999999999999999999))
         self.docData: DocData = DocData(
-            action=action_doc_data[:1],
+            action=action_doc_data[:1].upper(),
             version=self.__version_doc_data__
         )
         self.turn: Turn = Turn(
-            action=action_turn[:1],
+            action=action_turn[:1].upper(),
             version=self.__version__turn__
         )
         self.mtCurrency: MTCurrency = MTCurrency(
-            action=action_mt_currency[:1],
+            action=action_mt_currency[:1].upper(),
             version=self.__version__mt_currency__
         )
         

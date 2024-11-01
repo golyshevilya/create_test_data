@@ -8,6 +8,7 @@ import datetime
 import re
 import os
 import shutil
+import copy
 
 
 def validation_and_prepare_input_data(
@@ -189,11 +190,11 @@ def create_direction(direction: str, sender_system: str):
         return '2'
     
 def convert_message_for_direction(header: BDVOHeader, body: PaymentBDVO, is_correspondence_account: str):
-    print('*'*30)
-    print('INPUT HEADER = ', header.to_JSON())
-    print('*'*30)
-    print('INPYT BODY = ', body.to_JSON())
-    print('*'*30)
+    # print('*'*30)
+    # print('INPUT HEADER = ', header.to_JSON())
+    # print('*'*30)
+    # print('INPYT BODY = ', body.to_JSON())
+    # print('*'*30)
     header_enrollment = json.loads(header.to_JSON())
     header_extract = json.loads(header.to_JSON())
     body_enrollment = json.loads(body.to_JSON())
@@ -229,7 +230,6 @@ def convert_message_for_direction(header: BDVOHeader, body: PaymentBDVO, is_corr
         
     # Body extract
     body_extract['operation']['status'] = body_extract['objectVersions']['docData']['action']
-    body_extract['operation']['status'] = '0'
     body_extract['operation']['documentCurrencyCode'] = None
     body_extract['payee']['accountDigitalCurrencyCode'] = None
     body_extract['payee']['accountCurrencyCode'] = None
@@ -241,13 +241,13 @@ def convert_message_for_direction(header: BDVOHeader, body: PaymentBDVO, is_corr
     body_extract['swiftTransfer']['docNumber'] = None
     body_extract['swiftTransfer']['docDate'] = None
     
-    print('ENROLMENT HEADER = ', json.dumps(header_enrollment, indent=4, sort_keys=True, ensure_ascii=False))
-    print('*'*30)
-    print('EXTRACT HEADER = ', json.dumps(header_extract, indent=4, sort_keys=True, ensure_ascii=False))
-    print('*'*30)
-    print('ENROLMENT BODY = ', json.dumps(body_enrollment, indent=4, sort_keys=True, ensure_ascii=False))
-    print('*'*30)
-    print('EXTRACT BODY = ', json.dumps(body_extract, indent=4, sort_keys=True, ensure_ascii=False))
+    # print('ENROLMENT HEADER = ', json.dumps(header_enrollment, indent=4, sort_keys=True, ensure_ascii=False))
+    # print('*'*30)
+    # print('EXTRACT HEADER = ', json.dumps(header_extract, indent=4, sort_keys=True, ensure_ascii=False))
+    # print('*'*30)
+    # print('ENROLMENT BODY = ', json.dumps(body_enrollment, indent=4, sort_keys=True, ensure_ascii=False))
+    # print('*'*30)
+    # print('EXTRACT BODY = ', json.dumps(body_extract, indent=4, sort_keys=True, ensure_ascii=False))
     return header_enrollment, header_extract, body_enrollment, body_extract
 
 def remove_result_dir():
@@ -318,7 +318,258 @@ def check_user_params():
                          'флаг включения дополнительных параметров main_is_manual_params = True, но не один из параметров не заполнен. '
                          'Пожалуйста поправьте!')
 
-    return True               
+    return True
+
+
+def create_update_messages(body: dict, list_update_objects: list, count_object: int):
+    count = 0
+    list_update_objects_index = 0
+    for item in range(len(list_update_objects) * count_object):
+        if count == count_object:
+            list_update_objects_index += 1
+            count = 0
+        field_to_update = random.choice(list_update_objects[list_update_objects_index]).split('.')
+        count += 1
+        
+        
+        print('#%s Field in list %s = %s'%(item, list_update_objects_index, field_to_update))
+            
+    
+
+
+def convert_message_to_update_delete(header: dict, body: dict):
+    messages = []
+    list_doc_data_keys = [
+        'operation.documentDate',
+        'operation.documentNumber',
+        'operation.purpose',
+        'operation.purposeCode',
+        'operation.voCode',
+        'operation.bankBranchCode',
+        'operation.departmentCode',
+        'operation.paymentCode',
+        'operation.receiptDateToBank',
+        'payer.name',
+        'payer.account',
+        'payer.inn',
+        'payer.bankBIC',
+        'payer.kpp',
+        'payer.bankName',
+        'payee.name', 
+        'payee.account',
+        'payee.inn',
+        'payee.kpp',
+        ]
+    list_turn_keys = [
+        'operation.date',
+        'operation.amountNational',
+        'payee.amount',
+        'payer.amount'
+    ]
+    list_mt_currency_keys = [
+        'operation.documentAmount',
+        'operation.documentCurrency',
+        'swiftTransfer.orderingCustomerAccount',
+        'swiftTransfer.orderingCustomerName', 
+        'swiftTransfer.orderingInstitutionOption',
+        'swiftTransfer.orderingInstitutionSWIFT',
+        'swiftTransfer.remittanceInformation'
+    ]
+    create_update_messages(
+        body=copy.deepcopy(body),
+        list_update_objects=[
+            list_doc_data_keys, 
+            list_turn_keys, 
+            list_mt_currency_keys
+        ],
+        count_object=5
+    )
+    messages.append(
+        {
+            'insert': {
+                'header': copy.deepcopy(header),
+                'body': copy.deepcopy(body)        
+            }
+        }
+    )
+    
+    for num in range(2):
+        object_to_update = random.choice([list_doc_data_keys,list_turn_keys,list_mt_currency_keys])
+        
+        if object_to_update == list_doc_data_keys:
+            body['objectVersions']['docData']['action'] = 'U'
+            body['objectVersions']['docData']['version'] += 1
+            body['operation']['status'] = 'U'
+        elif object_to_update == list_turn_keys:
+            body['objectVersions']['turn']['action'] = 'U'
+            body['objectVersions']['turn']['version'] += 1
+        else:
+            body['objectVersions']['mtCurrency']['action'] = 'U'
+            body['objectVersions']['mtCurrency']['version'] += 1
+            
+            
+        field_to_update = random.choice(object_to_update).split('.')
+        print('UPDATE FIELD %s = %s' %(num,field_to_update))
+        if field_to_update[1].__contains__('date') or field_to_update[1].__contains__('Date'):
+            body[field_to_update[0]][field_to_update[1]] = '2099-12-12'
+        elif field_to_update[1].__contains__('amount') or field_to_update[1].__contains__('Amount'):
+            body[field_to_update[0]][field_to_update[1]] = body[field_to_update[0]][field_to_update[1]] + 100
+            if field_to_update[0] in ('payer', 'payee') and field_to_update[1] == 'amount':
+                if field_to_update[0] == 'payer':
+                   body['payee'][field_to_update[1]] = body['payee'][field_to_update[1]] + 100 
+                else: 
+                    body['payer'][field_to_update[1]] = body['payer'][field_to_update[1]] + 100 
+        elif field_to_update[1].__contains__('voCode'):
+            body[field_to_update[0]][field_to_update[1]] = 12345
+        elif type(body[field_to_update[0]][field_to_update[1]]) == int:
+            body[field_to_update[0]][field_to_update[1]] += 10
+        elif body[field_to_update[0]][field_to_update[1]].isdigit():
+            body[field_to_update[0]][field_to_update[1]] = body[field_to_update[0]][field_to_update[1]][::-1]
+        else:
+            body[field_to_update[0]][field_to_update[1]] += '_update_%s'%num
+        
+        messages.append(
+            {
+                'update': {
+                    'header':copy.deepcopy(header),
+                    'body':copy.deepcopy(body)        
+                }
+            }
+        )
+    body['operation']['status'] = 'D'
+    body['objectVersions']['docData']['action'] = 'D'
+    body['objectVersions']['docData']['version'] += 1
+    messages.append(
+            {
+                'delete': {
+                    'header':copy.deepcopy(header),
+                    'body':copy.deepcopy(body)        
+                }
+            }
+        )
+    # print('MESSAGES = ', json.dumps(messages, indent=4, ensure_ascii=False))
+    return messages
+        
+    
+    
+    
+def save_result_update_delete(messages: dict):
+    
+    os.makedirs(
+        os.path.join(
+            os.getcwd(), 
+            config.directory_to_save, 
+            messages[0]['insert']['header']['sendServiceId'], 
+            'insert'
+        )
+    )
+    os.makedirs(os.path.join(os.getcwd(), config.directory_to_save, messages[0]['insert']['header']['sendServiceId'], 'update_1'))
+    os.makedirs(os.path.join(os.getcwd(), config.directory_to_save, messages[0]['insert']['header']['sendServiceId'], 'update_2'))
+    os.makedirs(os.path.join(os.getcwd(), config.directory_to_save, messages[0]['insert']['header']['sendServiceId'], 'delete'))
+
+
+    write_to_file(
+        message=messages[0]['insert']['header'], 
+        name=os.path.join(
+            os.path.join(
+                os.getcwd(), 
+                config.directory_to_save, 
+                messages[0]['insert']['header']['sendServiceId'], 
+                'insert', 
+                'header'
+            )
+        )
+    )
+    write_to_file(
+        message=messages[0]['insert']['body'], 
+        name=os.path.join(
+            os.path.join(
+                os.getcwd(), 
+                config.directory_to_save, 
+                messages[0]['insert']['header']['sendServiceId'], 
+                'insert', 
+                'body'
+            )
+        )
+    )
+    
+    write_to_file(
+        message=messages[1]['update']['header'], 
+        name=os.path.join(
+            os.path.join(
+                os.getcwd(), 
+                config.directory_to_save, 
+                messages[0]['insert']['header']['sendServiceId'], 
+                'update_1',
+                'header'
+            )    
+        )
+    )
+    write_to_file(
+        message=messages[1]['update']['body'], 
+        name=os.path.join(
+            os.path.join(
+                os.getcwd(), 
+                config.directory_to_save, 
+                messages[0]['insert']['header']['sendServiceId'], 
+                'update_1', 
+                'body'
+            )    
+        )
+    )
+    
+    write_to_file(
+        message=messages[2]['update']['header'], 
+        name=os.path.join(
+            os.path.join(
+                os.getcwd(), 
+                config.directory_to_save, 
+                messages[0]['insert']['header']['sendServiceId'], 
+                'update_2', 
+                'header'
+            )
+        )
+    )
+    write_to_file(
+        message=messages[2]['update']['body'], 
+        name=os.path.join(
+            os.path.join(
+                os.getcwd(), 
+                config.directory_to_save, 
+                messages[0]['insert']['header']['sendServiceId'], 
+                'update_2',
+                'body'
+            )
+        )
+    )
+    
+    write_to_file(
+        message=messages[3]['delete']['header'], 
+        name=os.path.join(
+            os.path.join(
+                os.getcwd(), 
+                config.directory_to_save, 
+                messages[0]['insert']['header']['sendServiceId'], 
+                'delete', 
+                'header'
+            )
+        )
+    )
+    write_to_file(
+        message=messages[3]['delete']['body'], 
+        name=os.path.join(
+            os.path.join(
+                os.getcwd(), 
+                config.directory_to_save, 
+                messages[0]['insert']['header']['sendServiceId'], 
+                'delete', 
+                'body'
+            )
+        )
+    )
+    
+    
+    
     
     
 if __name__ == '__main__':
@@ -334,11 +585,12 @@ if __name__ == '__main__':
     for _ in range(user_config.main_count_examples):
         list_for_geniration.append(
             validation_and_prepare_input_data(
-                direction='зачисление' if user_config.main_action
+                direction=random.choice(['зачисление', 'списание']),
+                sender_system='выписка'
             )
         )
         
-    for item in list_for_gen:
+    for item in list_for_geniration:
         payment_header_raw = None
         payment_body_raw = None
         
@@ -361,12 +613,19 @@ if __name__ == '__main__':
             is_correspondence_account=item['is_correspondence_account']
         )
         
-        # save to result
-        save_result(
-            messages=(result_enrollment_header, result_extract_header, result_enrollment_body, result_extract_body),
-            sender_system=item['sender_system']
-        )
-    '''
+        if user_config.main_action == 1:
+            result = convert_message_to_update_delete(
+                header=result_extract_header,
+                body=result_extract_body
+            )
+            save_result_update_delete(messages=result)
+        else:
+            # save to result
+            save_result(
+                messages=(result_enrollment_header, result_extract_header, result_enrollment_body, result_extract_body),
+                sender_system=item['sender_system']
+            )
+    """
 
     
 
@@ -438,5 +697,5 @@ if __name__ == '__main__':
     # with open("temp_res.json", 'w', encoding='utf-8') as my_file:
     #     my_file.write(json.dumps(result, ensure_ascii=False))
 
-
+"""
     

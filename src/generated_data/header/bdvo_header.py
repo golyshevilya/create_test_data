@@ -12,7 +12,11 @@ class BDVOHeader:
                  division_id: str = None,
                  epk_id: str = None,
                  is_transit_customer_account: str = None,
-                 is_registry: str = None):
+                 is_registry: str = None) -> object:
+        """
+
+        :rtype: object
+        """
         self.registerId: str = str(random.randint(1000000000000000000, 9999999999999999999))
         self.divisionId: str = str(division_id if division_id else random.randint(10000000000, 99999999999))
         self.srcModule: str = 'crediting-payment'

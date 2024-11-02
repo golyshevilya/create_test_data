@@ -459,3 +459,57 @@ bank_names = [
 ]
 
 directory_to_save = 'result'
+
+list_doc_data_keys = [
+        'operation.documentDate',
+        'operation.documentNumber',
+        'operation.purpose',
+        'operation.purposeCode',
+        'operation.voCode',
+        'operation.bankBranchCode',
+        'operation.departmentCode',
+        'operation.paymentCode',
+        'operation.receiptDateToBank',
+        'payer.name',
+        'payer.account',
+        'payer.inn',
+        'payer.bankBIC',
+        'payer.kpp',
+        'payer.bankName',
+        'payee.name',
+        'payee.account',
+        'payee.inn',
+        'payee.kpp',
+        ]
+list_turn_keys = [
+    'operation.date',
+    'operation.amountNational',
+    'payee.amount',
+    'payer.amount'
+]
+list_mt_currency_keys = [
+    'operation.documentAmount',
+    'operation.documentCurrency',
+    'swiftTransfer.orderingCustomerAccount',
+    'swiftTransfer.orderingCustomerName',
+    'swiftTransfer.orderingInstitutionOption',
+    'swiftTransfer.orderingInstitutionSWIFT',
+    'swiftTransfer.remittanceInformation'
+]
+
+dict_direction_by_main_action = {
+    1: ['зачисление', 'списание'],
+    2: 'зачисление',
+    3: 'списание',
+    4: 'зачисление',
+    5: ['зачисление', 'списание']
+}
+
+dict_sender_system = {
+    1: 'выписка+зачисления',
+    2: 'зачисления',
+    3: 'выписка'
+}
+
+
+

@@ -1,19 +1,39 @@
 from config import config
-
+import random
 
 class SwiftTransfer:
-    def __init__(self):
-        self.orderingCustomerAccount: str = None
-        self.orderingCustomerName: str = None
-        self.orderingCustomerINN: str = None
-        self.orderingInstitutionName: str = None
-        self.orderingInstitutionSWIFT: str = None
-        self.orderingInstitutionBIC: str = None
-        self.orderingInstitutionOption: str = None
-        self.remittanceInformation: str = None
-        self.docNumber: str = None
-        self.docDate: str = None
+    def __init__(self, 
+                 customer_account: str, 
+                 customer_name: str, 
+                 customer_inn: str, 
+                 customer_bank_name: str, 
+                 customer_bank_swift: str,
+                 customer_bic: str, 
+                 operation_purpose: str,
+                 documnet_number: str,
+                 document_date: str):
+        self.orderingCustomerAccount: str = customer_account
+        self.orderingCustomerName: str = customer_name
+        self.orderingCustomerINN: str = customer_inn
+        self.orderingInstitutionName: str = customer_bank_name
+        self.orderingInstitutionSWIFT: str = customer_bank_swift 
+        self.orderingInstitutionBIC: str = customer_bic
+        self.orderingInstitutionOption: str = random.choice(['A', 'B'])
+        self.remittanceInformation: str = operation_purpose
+        self.docNumber: str = documnet_number 
+        self.docDate: str = document_date
 
+    def to_JSON(self):
+        result_dict = {}
+        for key, value in self.__dict__.items():
+            if not key.startswith('__'):
+                try:
+                    result_dict[key] = value.to_JSON()
+                except:
+                    result_dict[key] = value
+                    continue
+        return result_dict
+    
     def get_orderingCustomerAccount(self):
         return self.orderingCustomerAccount
 

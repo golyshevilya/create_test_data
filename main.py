@@ -1,7 +1,9 @@
 import random
 import sys
-from cgitb import handler
+from dataclasses import field
 from typing import Dict, Union, List
+
+from setuptools.logging import configure
 
 from config.user_config import main_is_manual_params
 from src.enrollment.body.enrollment_body import Enrollment
@@ -37,7 +39,30 @@ def validation_and_prepare_input_data(
         department_code: str = 'рандом',
         sender_system: str = 'выписка+зачисления',
         only_bdvo_params: str = 'рандом'
-):
+) -> object:
+    """
+
+    :param logger:
+    :param direction:
+    :param customer:
+    :param is_transit_customer_account:
+    :param counter:
+    :param operation_currency:
+    :param customer_currency:
+    :param currency_operation_code:
+    :param is_registry:
+    :param document_date:
+    :param operation_date:
+    :param amount_payment:
+    :param amount_in_customer_account_currency:
+    :param epk_id:
+    :param is_correspondence_account:
+    :param terbank:
+    :param department_code:
+    :param sender_system:
+    :param only_bdvo_params:
+    :return:
+    """
     direction = direction.lower()
     customer = customer.lower()
     is_transit_customer_account = is_transit_customer_account.lower()
@@ -199,7 +224,7 @@ def validation_and_prepare_input_data(
     }
 
 
-def create_direction(direction: str, sender_system: str):
+def create_direction(direction: str, sender_system: str) -> object:
     if sender_system == 'выписка+зачисления':
         return '1'
     if direction == 'рандом':
@@ -349,31 +374,52 @@ def check_user_params(logger: logging.Logger) -> dict:
         return dict_manual_params
 
 
-def create_update_messages(body: dict, list_update_objects: list, count_object: int):
+def create_update_messages(body: dict, logger: logging.Logger):
     count = 0
     list_update_objects_index = 0
+    list_update_objects = []
+    count_object = 1
+    logger.info('Старт имитации обновления сообщения')
+    configure_list_object_for_update = user_config.action_1_objects_for_update.split(',')
+    if len(configure_list_object_for_update) == 0 or configure_list_object_for_update is None:
+        list_update_objects = [
+            config.list_doc_data_keys,
+            config.list_turn_keys,
+            config.list_mt_currency_keys
+        ]
+    else:
+        if 'docData' in configure_list_object_for_update:
+            list_update_objects.append(config.list_doc_data_keys)
+        if 'turn' in configure_list_object_for_update:
+            list_update_objects.append(config.list_turn_keys)
+        if 'mtCurrency' in configure_list_object_for_update:
+            list_update_objects.append(config.list_mt_currency_keys)
+
+    logger.info('action_1_objects_for_update = %s'% user_config.action_1_objects_for_update)
+    logger.info('action_1_count_for_update_in_one_object = %s' % user_config.action_1_count_for_update_in_one_object)
+
+    result_list = []
     for item in range(len(list_update_objects) * count_object):
+        if user_config.action_1_count_for_update_in_one_object and count_object <= len(list_update_objects[list_update_objects_index]):
+            count_object = user_config.action_1_count_for_update_in_one_object
+        else:
+            count_object = len(list_update_objects[list_update_objects_index]) - 1
         if count == count_object:
             list_update_objects_index += 1
             count = 0
         field_to_update = random.choice(list_update_objects[list_update_objects_index]).split('.')
+        while field_to_update in result_list:
+            field_to_update = random.choice(list_update_objects[list_update_objects_index]).split('.')
+        result_list.append(field_to_update)
         count += 1
 
-        print('#%s Field in list %s = %s' % (item, list_update_objects_index, field_to_update))
+        logger.info('#%s Field in list %s = %s(count = %s)' % (item, list_update_objects_index, field_to_update, count))
+    logger.info('Result list: %s' % result_list)
 
+def convert_message_to_update_delete(header: dict, body: dict, logger: logging.Logger) -> list:
+    messages: list = []
 
-def convert_message_to_update_delete(header: dict, body: dict):
-    messages = []
-
-    create_update_messages(
-        body=copy.deepcopy(body),
-        list_update_objects=[
-            config.list_doc_data_keys,
-            config.list_turn_keys,
-            config.list_mt_currency_keys
-        ],
-        count_object=5
-    )
+    create_update_messages(body=copy.deepcopy(body), logger=logger)
     messages.append(
         {
             'insert': {
@@ -384,7 +430,8 @@ def convert_message_to_update_delete(header: dict, body: dict):
     )
 
     for num in range(2):
-        object_to_update = random.choice([config.list_doc_data_keys, config.list_turn_keys, config.list_mt_currency_keys])
+        object_to_update = random.choice(
+            [config.list_doc_data_keys, config.list_turn_keys, config.list_mt_currency_keys])
 
         if object_to_update == config.list_doc_data_keys:
             body['objectVersions']['docData']['action'] = 'U'
@@ -600,7 +647,7 @@ def create_logger() -> logging.Logger:
     :return: - Logger object
     """
     logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     handler = logging.StreamHandler(stream=sys.stdout)
     handler.setFormatter(logging.Formatter(fmt='[%(asctime)s]: %(levelname)8s: %(filename)20s:'
                                                ' %(funcName)30s: %(message)s'))
@@ -694,7 +741,8 @@ if __name__ == '__main__':
         if user_config.main_action == 1:
             result = convert_message_to_update_delete(
                 header=result_extract_header,
-                body=result_extract_body
+                body=result_extract_body,
+                logger=logger
             )
             save_result_update_delete(messages=result)
         else:

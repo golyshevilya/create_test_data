@@ -22,6 +22,12 @@ action_1_objects_for_update = 'docData,turn,mtCurrency'
 # Количество полей, которые необходимо обновить
 action_1_count_for_update_in_one_object = 20
 
+# Объекты для обновления в первом этапе
+action_1_first_update_objects = 'docData,turn,mtCurrency'
+
+# Объекты для обновления во втором этапе
+action_1_second_update_objects = 'docData,turn,mtCurrency'
+
 # Ненужные параметры в сообщении
 # формат значения через запятую согласно формату топика: payment-kafka
 main_unnecessary_params = ''

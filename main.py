@@ -1,5 +1,6 @@
 import random
 import sys
+from copy import deepcopy
 from typing import Dict, Union, List
 
 from faker import Faker
@@ -233,12 +234,10 @@ def create_direction(direction: str, sender_system: str) -> object:
 
 
 def convert_message_for_direction(header: HeaderCreate, body: BodyCreate, is_correspondence_account: str):
-	te = BodyCreate(kwargs = {'BodyObject': body})
-	te.get_payer().set_account(None)
-	print('*'*100)
-	print(body.get_payer().get_account())
-	print('*'*100)
-	print(te.get_payer().get_account())
+	cor2 = deepcopy(body.get_correspondence())
+	cor2.set_debitAccount(value=None)
+	print('cor2 = %s' % cor2.__dict__)
+	print('body.correspondence = %s' % body.get_correspondence().__dict__)
 
 	header_enrollment = json.loads(header.to_JSON())
 	header_extract = json.loads(header.to_JSON())

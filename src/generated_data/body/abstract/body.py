@@ -17,6 +17,8 @@ class BodyAbstract(abc.ABC):
 		self.swiftTransfer = None
 		self.__faker__ = faker.Faker()
 
+
+
 	def to_JSON(self):
 		result_dict = {}
 		for key, value in self.__dict__.items():
@@ -26,7 +28,6 @@ class BodyAbstract(abc.ABC):
 				except AttributeError:
 					result_dict[key] = value
 					continue
-		print(result_dict)
 		return json.dumps(
 			result_dict,
 			sort_keys = False,

@@ -15,15 +15,6 @@ class CorrespondenceAbstract(abc.ABC):
 		self.debitAccount: str = account
 		self.accountCurrency = account_currency
 
-	def __deepcopy__(self, memo):
-		return CorrespondenceAbstract(
-			date = copy.deepcopy(self.accountDate, memo = memo),
-			amount = copy.deepcopy(self.accountAmount, memo = memo),
-			account = copy.deepcopy(self.debitAccount, memo = memo),
-			account_currency = copy.deepcopy(self.accountCurrency, memo = memo),
-			is_correspondence = self.__is_correspondence__
-		)
-
 	def to_JSON(self):
 		result_dict = {}
 		for key, value in self.__dict__.items():

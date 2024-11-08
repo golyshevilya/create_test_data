@@ -1,5 +1,6 @@
 from config import config
 from src.generated_data.body.abstract.correspondence import CorrespondenceAbstract
+import copy
 
 
 class CorrespondenceCreate(CorrespondenceAbstract):
@@ -7,6 +8,15 @@ class CorrespondenceCreate(CorrespondenceAbstract):
 
 		super().__init__(date, amount, account, is_correspondence)
 		self.set_accountCurrency(self.create_currency(currency_code = currency))
+
+	def __deepcopy__(self, memo):
+		return CorrespondenceCreate(
+			date = copy.deepcopy(self.accountDate, memo = memo),
+			amount = copy.deepcopy(self.accountAmount, memo = memo),
+			currency = copy.deepcopy(self.accountCurrency, memo = memo),
+			account = copy.deepcopy(self.debitAccount, memo = memo),
+			is_correspondence = self.__is_correspondence__
+		)
 
 	@staticmethod
 	def create_currency(currency_code: str):

@@ -234,10 +234,10 @@ def create_direction(direction: str, sender_system: str) -> object:
 
 
 def convert_message_for_direction(header: HeaderCreate, body: BodyCreate, is_correspondence_account: str):
-	cor2 = deepcopy(body.get_correspondence())
-	cor2.set_debitAccount(value=None)
+	cor2 = deepcopy(body.get_payee())
+	cor2.set_status(value='LOL')
 	print('cor2 = %s' % cor2.__dict__)
-	print('body.correspondence = %s' % body.get_correspondence().__dict__)
+	print('body.correspondence = %s' % body.get_payee().__dict__)
 
 	header_enrollment = json.loads(header.to_JSON())
 	header_extract = json.loads(header.to_JSON())

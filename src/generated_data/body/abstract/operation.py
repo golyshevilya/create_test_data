@@ -36,22 +36,11 @@ class OperationAbstract(abc.ABC):
 		self.direction: int = direction
 		self.paymentCode: str = payment_code
 		self.purposeCode = None
-		self.receiptDateToBank = None
+		self.receiptDateToBank = str(self.__faker__.date_between(start_date = '-1d', end_date = 'now'))
 
+	@abc.abstractmethod
 	def __deepcopy__(self, memo):
-		return OperationAbstract(
-			document_date=copy.deepcopy(self.documentDate, memo=memo),
-			document_number=copy.deepcopy(self.documentNumber, memo=memo),
-			document_amount=copy.deepcopy(self.documentAmount, memo=memo),
-			document_currency=copy.deepcopy(self.documentCurrency, memo=memo),
-			document_currency_code=copy.deepcopy(self.documentCurrencyCode, memo=memo),
-			amount_national=copy.deepcopy(self.amountNational, memo=memo),
-			purpose=copy.deepcopy(self.purpose, memo=memo),
-			currency_operation_code=copy.deepcopy(self.voCode, memo=memo),
-			divisionId=copy.deepcopy(self.bankBranchCode, memo=memo),
-			direction=copy.deepcopy(self.direction, memo=memo),
-			payment_code=copy.deepcopy(self.paymentCode, memo=memo)
-		)
+		pass
 
 	def to_JSON(self):
 		result_dict = {}

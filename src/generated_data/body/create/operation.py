@@ -1,3 +1,4 @@
+import copy
 import random
 
 from src.generated_data.body.abstract.operation import OperationAbstract
@@ -9,8 +10,21 @@ class OperationCreate(OperationAbstract):
 	             divisionId: str, direction: str, payment_code: str):
 		super().__init__(document_date, document_number, document_amount, document_currency, document_currency_code,
 		                 amount_national, purpose, currency_operation_code, divisionId, direction, payment_code)
-		self.set_paymentCode(random.randint(1, 100000))
-		self.set_receiptDateToBank(str(self.__faker__.date_between(start_date = '-1d', end_date = 'now')))
+
+	def __deepcopy__(self, memo):
+		return OperationCreate(
+			document_date=copy.deepcopy(self.documentDate, memo=memo),
+			document_number=copy.deepcopy(self.documentNumber, memo=memo),
+			document_amount=copy.deepcopy(self.documentAmount, memo=memo),
+			document_currency=copy.deepcopy(self.documentCurrency, memo=memo),
+			document_currency_code=copy.deepcopy(self.documentCurrencyCode, memo=memo),
+			amount_national=copy.deepcopy(self.amountNational, memo=memo),
+			purpose=copy.deepcopy(self.purpose, memo=memo),
+			currency_operation_code=copy.deepcopy(self.voCode, memo=memo),
+			divisionId=copy.deepcopy(self.departmentCode, memo=memo),
+			direction=copy.deepcopy(self.direction, memo=memo),
+			payment_code=copy.deepcopy(self.paymentCode, memo=memo)
+		)
 
 	def get_status(self):
 		return self.status

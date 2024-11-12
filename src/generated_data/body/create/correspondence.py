@@ -6,7 +6,7 @@ import copy
 class CorrespondenceCreate(CorrespondenceAbstract):
 	def __init__(self, date: str, amount: str, currency: str, account: str, is_correspondence: bool = False):
 
-		super().__init__(date, amount, account, is_correspondence)
+		super().__init__(date, amount, account, is_correspondence, currency)
 		self.set_accountCurrency(self.create_currency(currency_code = currency))
 
 	def __deepcopy__(self, memo):
@@ -21,7 +21,7 @@ class CorrespondenceCreate(CorrespondenceAbstract):
 	@staticmethod
 	def create_currency(currency_code: str):
 		for key, value in config.dict_currency.items():
-			if value == currency_code:
+			if value == currency_code or key == currency_code:
 				return key
 
 	def get_accountDate(self):

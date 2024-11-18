@@ -1,3 +1,5 @@
+import copy
+
 from src.generated_data.body.abstract.object_versions import ObjectVersionAbstract
 from src.generated_data.body.create.turn import TurnCreate
 from src.generated_data.body.create.doc_data import DocDataCreate
@@ -6,47 +8,45 @@ import random
 
 
 class ObjectVersionsCreate(ObjectVersionAbstract):
-	def __init__(self, is_versions_similar: bool = False, action_doc_data: str = 'insert', action_turn: str = 'insert',
+	def __init__(self,
+	             turn_id: str,
+	             version_doc_data: str,
+	             version_turn: str,
+	             version_mt_currency: str,
+	             action_doc_data: str = 'insert',
+	             action_turn: str = 'insert',
 	             action_mt_currency: str = 'insert'):
+		super().__init__(turn_id = turn_id)
 
-		super().__init__()
-		self.__version_doc_data__, self.__version__turn__, self.__version__mt_currency__ = self.create_versions(
-			is_versions_similar = is_versions_similar)
-
-		self.set_turn_id(
-			'shard%s:%s' % (
-				random.randint(0, 5),
-				random.randint(1000000000000000000, 9999999999999999999)
-			)
-		)
 		self.set_docData(
 			DocDataCreate(
 				action = action_doc_data[:1].upper(),
-				version = self.__version_doc_data__
+				version = version_doc_data
 			)
 		)
 		self.set_turn(
 			TurnCreate(
 				action = action_turn[:1].upper(),
-				version = self.__version__turn__
+				version = version_turn
 			)
 		)
 		self.set_mtCurrency(
 			MTCurrency(
 				action = action_mt_currency[:1].upper(),
-				version = self.__version__mt_currency__
+				version = version_mt_currency
 			)
 		)
 
-	@staticmethod
-	def create_versions(is_versions_similar: bool):
-		if is_versions_similar:
-			version = random.randint(1000000000000, 9999999999999)
-			return version, version, version
-		else:
-			return random.randint(1000000000000, 9999999999999), random.randint(1000000000000,
-			                                                                    9999999999999), random.randint(
-				1000000000000, 9999999999999)
+	def __deepcopy__(self, memo):
+		return ObjectVersionsCreate(
+			turn_id = copy.deepcopy(self.get_turn_id(), memo = memo),
+			version_doc_data = copy.deepcopy(self.get_docData().get_version(), memo = memo),
+			version_turn = copy.deepcopy(self.get_turn().get_version(), memo = memo),
+			version_mt_currency = copy.deepcopy(self.get_mtCurrency().get_version(), memo = memo),
+			action_doc_data = copy.deepcopy(self.get_docData().get_action(), memo = memo),
+			action_turn = copy.deepcopy(self.get_turn().get_action(), memo = memo),
+			action_mt_currency = copy.deepcopy(self.get_mtCurrency().get_action(), memo = memo)
+		)
 
 	def get_docData(self):
 		return self.docData

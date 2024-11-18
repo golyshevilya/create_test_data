@@ -1,3 +1,4 @@
+import copy
 import uuid
 import datetime
 import random
@@ -8,22 +9,56 @@ from src.generated_data.header.abstract.header import HeaderAbstract
 
 
 class HeaderCreate(HeaderAbstract):
-	def __init__(self, direction: str, division_id: str = None, epk_id: str = None,
-	             is_transit_customer_account: str = None, is_registry: str = None) -> object:
+	def __init__(self,
+	             direction: str = None,
+	             division_id: str = None,
+	             epk_id: str = None,
+	             is_transit_customer_account: str = None,
+	             is_registry: str = None,
+	             register_id: int = None,
+	             src_module: str = None,
+	             evt_id: str = None,
+	             snd_date: str = None,
+	             request_id: str = None,
+	             send_service_id: str = None,
+	             doc_guid: str = None,
+	             kind_doc: str = None,
+	             account_type: str = None,
+	             creator_system: str = None) -> 'HeaderCreate':
 		super().__init__()
-		self.set_registerId(random.randint(1000000000000000000, 9999999999999999999))
+		self.set_registerId(register_id if register_id else
+		                    random.randint(1000000000000000000, 9999999999999999999))
 		self.set_divisionId(str(division_id if division_id else random.randint(10000000000, 99999999999)))
-		self.set_srcModule('crediting-payment')
-		self.set_evtId(self.create_uuid(type = 'evtId'))
-		self.set_sndDate(datetime.datetime.today().strftime('%Y-%m-%dT%H:%M:%S'))
+		self.set_srcModule(src_module if src_module else 'crediting-payment')
+		self.set_evtId(evt_id if evt_id else self.create_uuid(type = 'evtId'))
+		self.set_sndDate(snd_date if snd_date else datetime.datetime.today().strftime('%Y-%m-%dT%H:%M:%S'))
 		self.set_epkId(epk_id if epk_id else str(random.randint(1000000000000000000, 9999999999999999999)))
-		self.set_requestId(self.create_uuid(type = 'requestId'))
-		self.set_sendServiceId(self.create_uuid(type = 'sendServiceId'))
-		self.set_docGuid(self.create_uuid(type = 'docGuid'))
-		self.set_kindDoc(random.choice(['01', '02', '06', '16', 'CRED', None]))
-		self.set_accountType(
-			self.create_transition_account(is_transit_customer_account = is_transit_customer_account))
-		self.set_creatorSystem(self.create_creator_system(direction = direction, is_registry = is_registry))
+		self.set_requestId(request_id if register_id else self.create_uuid(type = 'requestId'))
+		self.set_sendServiceId(send_service_id if send_service_id else self.create_uuid(type = 'sendServiceId'))
+		self.set_docGuid(doc_guid if doc_guid else self.create_uuid(type = 'docGuid'))
+		self.set_kindDoc(kind_doc if kind_doc else random.choice(['01', '02', '06', '16', 'CRED', None]))
+		self.set_accountType(account_type if account_type else
+		                     self.create_transition_account(is_transit_customer_account = is_transit_customer_account))
+		self.set_creatorSystem(
+			creator_system if creator_system else self.create_creator_system(direction = direction,
+			                                                                 is_registry = is_registry)
+		)
+
+	def __deepcopy__(self, memo):
+		return HeaderCreate(
+			epk_id = copy.deepcopy(self.get_epkId(), memo),
+			division_id = copy.deepcopy(self.get_divisionId(), memo),
+			register_id = copy.deepcopy(self.get_registerId(), memo),
+			src_module = copy.deepcopy(self.get_srcModule(), memo),
+			evt_id = copy.deepcopy(self.get_evtId(), memo),
+			snd_date = copy.deepcopy(self.get_sndDate(), memo),
+			request_id = copy.deepcopy(self.get_requestId(), memo),
+			send_service_id = copy.deepcopy(self.get_sendServiceId(), memo),
+			doc_guid = copy.deepcopy(self.get_docGuid(), memo),
+			kind_doc = copy.deepcopy(self.get_kindDoc(), memo),
+			account_type = copy.deepcopy(self.get_accountType(), memo),
+			creator_system = copy.deepcopy(self.get_creatorSystem(), memo)
+		)
 
 	@staticmethod
 	def create_transition_account(is_transit_customer_account: str) -> str:

@@ -2,11 +2,11 @@ import abc
 
 class ObjectVersionAbstract(abc.ABC):
 
-	def __init__(self):
+	def __init__(self, turn_id: str):
 		self.mtCurrency = None
 		self.turn = None
 		self.docData = None
-		self.turn_id = None
+		self.turn_id = turn_id
 
 	def to_JSON(self):
 		result_dict = {}

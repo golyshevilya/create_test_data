@@ -1,3 +1,5 @@
+import copy
+
 from config import config
 from src.generated_data.body.create.swift_transfer import SwiftTransferCreate
 from src.generated_data.body.create.operation import OperationCreate
@@ -19,14 +21,15 @@ class BodyCreate(BodyAbstract):
 		super().__init__(**kwargs)
 		kwargs = kwargs['kwargs']
 		try:
-			if type(kwargs['BodyObject']) in [BodyCreate, BodyUpdate]:
-				self.set_swiftTransfer(kwargs['BodyObject'].get_swiftTransfer().get_)
-				self.set_operation(kwargs['BodyObject'].get_operation())
-				self.set_payee(kwargs['BodyObject'].get_payee())
-				self.set_payer(kwargs['BodyObject'].get_payer())
-				self.set_correspondence(kwargs['BodyObject'].get_correspondence())
-				self.set_objectVersions(kwargs['BodyObject'].get_objectVersions())
+			if kwargs['__deepcopy__']:
+				self.set_payee(copy.deepcopy(kwargs['payee']))
+				self.set_payer(copy.deepcopy(kwargs['payer']))
+				self.set_operation(copy.deepcopy(kwargs['operation']))
+				self.set_correspondence(copy.deepcopy(kwargs['correspondence']))
+				self.set_objectVersions(copy.deepcopy(kwargs['objectVersions']))
+				self.set_swiftTransfer(copy.deepcopy(kwargs['swiftTransfer']))
 		except Exception as e:
+
 			self.__customer_account__ = self.create_account(
 				is_resident = self.create_is_resident(customer = kwargs['customer']),
 				is_transit = self.create_is_transit(is_transit = kwargs['is_transit_customer_account']),
@@ -46,6 +49,7 @@ class BodyCreate(BodyAbstract):
 			                                                  is_registry = self.__is_registry__)
 			self.__document_number__ = random.randint(100000, 999999999)
 			self.__document_date__ = str(self.__faker__.date_between(start_date = '-10d', end_date = 'now'))
+			self.__bank_option__ = random.choice(['A', 'B'])
 
 			self.__document_amount__ = round((random.random() * random.randint(10, 10000000)), 2)
 			self.__document_currency__, self.__document_currency_code__ = self.create_document_currency(
@@ -81,15 +85,16 @@ class BodyCreate(BodyAbstract):
 
 			self.set_swiftTransfer(
 				SwiftTransferCreate(
-					customer_account = self.__counter_account__,
-					customer_name = self.__counter_name__,
-					customer_inn = self.__counter_inn__,
-					customer_bank_name = self.__counter_bank_name__,
-					customer_bank_swift = self.__counter_bank_swift__,
-					customer_bic = self.__counter_bank_bic__,
+					counter_account = self.__counter_account__,
+					counter_name = self.__counter_name__,
+					counter_inn = self.__counter_inn__,
+					counter_bank_name = self.__counter_bank_name__,
+					counter_bank_swift = self.__counter_bank_swift__,
+					counter_bic = self.__counter_bank_bic__,
 					operation_purpose = self.__operation__purpose__,
 					document_number = self.__document_number__,
-					document_date = self.__document_date__
+					document_date = self.__document_date__,
+					option = self.__bank_option__
 				)
 			)
 			self.set_operation(
@@ -177,7 +182,31 @@ class BodyCreate(BodyAbstract):
 					)
 				)
 			)
-			self.set_objectVersions(ObjectVersionsCreate())
+			self.__version_doc_data__, self.__version__turn__, self.__version__mt_currency__ = self.create_versions()
+			self.__turn_id__ = 'shard%s:%s' % (
+				random.randint(0, 5),
+				random.randint(1000000000000000000, 9999999999999999999)
+			)
+			self.set_objectVersions(
+				ObjectVersionsCreate(
+					turn_id = self.__turn_id__,
+					version_doc_data = self.__version_doc_data__,
+					version_turn = self.__version__turn__,
+					version_mt_currency = self.__version__mt_currency__
+				)
+			)
+
+
+
+	@staticmethod
+	def create_versions(is_versions_similar: bool = False):
+		if is_versions_similar:
+			version = random.randint(1000000000000, 9999999999999)
+			return version, version, version
+		else:
+			return random.randint(1000000000000, 9999999999999), random.randint(1000000000000,
+			                                                                    9999999999999), random.randint(
+				1000000000000, 9999999999999)
 
 	@staticmethod
 	def create_correspondence(is_correspondence_account: str):

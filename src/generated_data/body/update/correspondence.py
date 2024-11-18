@@ -1,3 +1,5 @@
+import copy
+
 from config import config
 from src.generated_data.body.abstract.correspondence import CorrespondenceAbstract
 
@@ -5,13 +7,22 @@ from src.generated_data.body.abstract.correspondence import CorrespondenceAbstra
 class CorrespondenceUpdate(CorrespondenceAbstract):
 	def __init__(self, date: str, amount: str, currency: str, account: str, is_correspondence: bool = False):
 
-		super().__init__(date, amount, account, is_correspondence)
+		super().__init__(date, amount, account, is_correspondence, currency)
 		self.set_accountCurrency(self.create_currency(currency_code = currency))
+
+	def __deepcopy__(self, memo):
+		return CorrespondenceUpdate(
+			date = copy.deepcopy(self.accountDate, memo = memo),
+			amount = copy.deepcopy(self.accountAmount, memo = memo),
+			currency = copy.deepcopy(self.accountCurrency, memo = memo),
+			account = copy.deepcopy(self.debitAccount, memo = memo),
+			is_correspondence = self.__is_correspondence__
+		)
 
 	@staticmethod
 	def create_currency(currency_code: str):
 		for key, value in config.dict_currency.items():
-			if value == currency_code:
+			if value == currency_code or key == currency_code:
 				return key
 
 	def get_accountDate(self):

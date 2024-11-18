@@ -464,7 +464,6 @@ list_doc_data_keys = [
         'operation.documentDate',
         'operation.documentNumber',
         'operation.purpose',
-        'operation.purposeCode',
         'operation.voCode',
         'operation.bankBranchCode',
         'operation.departmentCode',

@@ -1,9 +1,22 @@
+import copy
+
 from src.generated_data.body.abstract.payer import PayerAbstract
 
 
 class PayerCreate(PayerAbstract):
 	def __init__(self, name: str, account: str, amount: str, inn: str, kpp: str, bank_bic: str, bank_name: str):
 		super().__init__(name, account, amount, inn, kpp, bank_bic, bank_name)
+
+	def __deepcopy__(self, memo):
+		return PayerCreate(
+			name = copy.deepcopy(self.get_name(), memo = memo),
+			account = copy.deepcopy(self.get_account(), memo = memo),
+			amount = copy.deepcopy(self.get_amount(), memo = memo),
+			inn = copy.deepcopy(self.get_inn(), memo = memo),
+			kpp = copy.deepcopy(self.get_kpp(), memo = memo),
+			bank_bic = copy.deepcopy(self.get_bankBIC(), memo = memo),
+			bank_name = copy.deepcopy(self.get_bankName(), memo = memo)
+		)
 
 	def get_name(self):
 		return self.name

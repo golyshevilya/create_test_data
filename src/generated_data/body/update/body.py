@@ -1,9 +1,9 @@
+import copy
 import itertools
 import random
 
 from config import config
 from src.generated_data.body.abstract.body import BodyAbstract
-
 
 
 class BodyUpdate(BodyAbstract):
@@ -12,168 +12,11 @@ class BodyUpdate(BodyAbstract):
 
 		super().__init__(**kwargs)
 		kwargs = kwargs['kwargs']
-		if type(kwargs['BodyObject']) in [BodyCreate, BodyUpdate]:
-			self.set_swiftTransfer(kwargs['BodyObject'].get_swift_transfer())
-			self.set_operation(kwargs['BodyObject'].get_operation())
-			self.set_payee(kwargs['BodyObject'].get_payee())
-			self.set_payer(kwargs['BodyObject'].get_payer())
-			self.set_correspondence(kwargs['BodyObject'].get_correspondence())
-			self.set_objectVersions(kwargs['BodyObject'].get_objectVersions())
-
-
-		# self.__customer_account__ = self.create_account(
-		# 	is_resident = self.create_is_resident(customer = kwargs['customer']),
-		# 	is_transit = self.create_is_transit(is_transit = kwargs['is_transit_customer_account']),
-		# 	account_length = 20,
-		# 	currency_code = self.create_customer_currency(customer_currency = kwargs['customer_currency']),
-		# 	is_client_account = True
-		# )
-		#
-		# self.__customer_name__ = self.create_person_name(is_client = True)
-		# self.__customer_inn__ = self.create_inn()
-		# self.__customer_bank_name__ = random.choice(config.bank_names)
-		# self.__customer_bank_swift__ = self.__faker__.swift()
-		# self.__customer_bank_bic__ = random.randint(100000000, 999999999)
-		# self.__currency_operation_code__ = self.create_currency_operation_code(kwargs['currency_operation_code'])
-		# self.__is_registry__ = self.create_is_registry(is_registry = kwargs['is_registry'])
-		# self.__operation__purpose__ = self.create_purpose(is_vo_code = False if random.randint(0, 1) == 0 else True,
-		#                                                   is_registry = self.__is_registry__)
-		# self.__document_number__ = random.randint(100000, 999999999)
-		# self.__document_date__ = str(self.__faker__.date_between(start_date = '-10d', end_date = 'now'))
-		#
-		# self.__document_amount__ = round((random.random() * random.randint(10, 10000000)), 2)
-		# self.__document_currency__, self.__document_currency_code__ = self.create_document_currency(
-		# 	operation_currency = kwargs['operation_currency'])
-		# self.__amount_national__ = round((random.random() * random.randint(10, 10000000)), 2)
-		# self.__payment_code__ = kwargs['payment_code'] if kwargs['payment_code'] != 'CRED' else '01'
-		# self.__amount_in_account_currency__ = round((random.random() * random.randint(10, 10000000)), 2)
-		# self.__account_currency__, self.__account_currency_code__ = self.create_account_currency(
-		# 	self.__customer_account__)
-		# self.__customer_kpp__ = str(random.randint(100000000, 999999999))
-		#
-		# self.__counter_account__ = self.create_account(
-		# 	is_resident = self.create_is_resident(customer = kwargs['counter']),
-		# 	is_transit = False,
-		# 	account_length = 20,
-		# 	currency_code = self.create_customer_currency(customer_currency = 'рандом'),
-		# 	is_client_account = False
-		# )
-		# self.__counter_name__ = self.create_person_name(is_client = False)
-		# self.__counter_inn__ = self.create_inn()
-		# self.__counter_bank_name__ = random.choice(config.bank_names)
-		# self.__counter_bank_swift__ = self.__faker__.swift()
-		# self.__counter_kpp__ = str(random.randint(100000000, 999999999))
-		# self.__counter_bank_bic__ = random.randint(100000000, 999999999)
-		#
-		# self.__correspondence_date__ = str(self.__faker__.date_between(start_date = '-2d', end_date = 'now'))
-		# self.__correspondence_account__ = self.create_account(
-		# 	account_length = 20,
-		# 	currency_code = self.create_customer_currency(customer_currency = kwargs['customer_currency']),
-		# 	is_client_account = True
-		# )
-		# self.__correspondence_amount__ = round((random.random() * random.randint(10, 10000000)), 2)
-		#
-		# self.set_swiftTransfer(
-		# 	SwiftTransferCreate(
-		# 		customer_account = self.__customer_account__,
-		# 		customer_name = self.__customer_name__,
-		# 		customer_inn = self.__customer_inn__,
-		# 		customer_bank_name = self.__customer_bank_name__,
-		# 		customer_bank_swift = self.__customer_bank_swift__,
-		# 		customer_bic = self.__customer_bank_bic__,
-		# 		operation_purpose = self.__operation__purpose__,
-		# 		document_number = self.__document_number__,
-		# 		document_date = self.__document_date__
-		# 	)
-		# )
-		# self.set_operation(
-		# 	OperationCreate(
-		# 		document_date = self.__document_date__,
-		# 		document_number = self.__document_number__,
-		# 		document_amount = self.__document_amount__,
-		# 		document_currency = self.__document_currency__,
-		# 		document_currency_code = self.__document_currency_code__,
-		# 		amount_national = self.__amount_national__,
-		# 		purpose = self.__operation__purpose__,
-		# 		currency_operation_code = self.__currency_operation_code__,
-		# 		divisionId = kwargs['division_id'],
-		# 		direction = kwargs['direction'],
-		# 		payment_code = self.__payment_code__
-		# 	)
-		# )
-		#
-		# if kwargs['direction'] == '1':
-		# 	self.set_payee(
-		# 		PayeeCreate(
-		# 			# customer
-		# 			name = self.__customer_name__,
-		# 			account = self.__customer_account__,
-		# 			amount = self.__amount_in_account_currency__,
-		# 			account_digital_currency_code = self.__account_currency_code__,
-		# 			account_currency_code = self.__account_currency__,
-		# 			inn = self.__customer_inn__,
-		# 			kpp = self.__customer_kpp__,
-		# 			bank_bic = self.__customer_bank_bic__,
-		# 			bank_name = self.__customer_bank_name__
-		# 		)
-		# 	)
-		#
-		# 	self.set_payer(
-		# 		PayerCreate(
-		# 			# counter
-		# 			name = self.__counter_name__,
-		# 			account = self.__counter_account__,
-		# 			amount = self.__amount_in_account_currency__,
-		# 			inn = self.__counter_inn__,
-		# 			kpp = self.__counter_kpp__,
-		# 			bank_bic = self.__counter_bank_bic__,
-		# 			bank_name = self.__counter_bank_name__
-		# 		)
-		# 	)
-		#
-		# else:
-		# 	self.set_payee(
-		# 		PayeeCreate(
-		# 			# counter
-		# 			name = self.__counter_name__,
-		# 			account = self.__counter_account__,
-		# 			amount = self.__amount_in_account_currency__,
-		# 			account_digital_currency_code = None,
-		# 			account_currency_code = None,
-		# 			inn = self.__counter_inn__,
-		# 			kpp = self.__counter_kpp__,
-		# 			bank_bic = self.__counter_bank_bic__,
-		# 			bank_name = self.__counter_bank_name__
-		# 		)
-		# 	)
-		#
-		# 	self.set_payer(
-		# 		PayerCreate(
-		# 			# customer
-		# 			name = self.__customer_name__,
-		# 			account = self.__customer_account__,
-		# 			amount = self.__amount_in_account_currency__,
-		# 			inn = self.__customer_inn__,
-		# 			kpp = self.__customer_kpp__,
-		# 			bank_bic = self.__customer_bank_bic__,
-		# 			bank_name = self.__customer_bank_name__
-		# 		)
-		# 	)
-		#
-		# self.set_correspondence(
-		# 	CorrespondenceCreate(
-		# 		date = self.__correspondence_date__,
-		# 		amount = self.__correspondence_amount__,
-		# 		currency = self.__correspondence_account__[5:8],
-		# 		account = self.__correspondence_account__,
-		# 		is_correspondence = self.create_correspondence(
-		# 			is_correspondence_account = kwargs['is_correspondence_account']
-		# 		)
-		# 	)
-		# )
-		# self.set_objectVersions(ObjectVersionsCreate())
-
-
+		self.set_payee(copy.deepcopy(kwargs['payee']))
+		self.set_payer(copy.deepcopy(kwargs['payer']))
+		self.set_operation(copy.deepcopy(kwargs['operation']))
+		self.set_objectVersions(copy.deepcopy(kwargs['objectVersions']))
+		self.set_swiftTransfer(copy.deepcopy(kwargs['swiftTransfer']))
 
 	@staticmethod
 	def create_correspondence(is_correspondence_account: str):

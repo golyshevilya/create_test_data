@@ -233,65 +233,129 @@ def create_direction(direction: str, sender_system: str) -> object:
 		return '2'
 
 
-def convert_message_for_direction(header: HeaderCreate, body: BodyCreate, is_correspondence_account: str):
-	cor2 = deepcopy(body.get_payee())
-	cor2.set_status(value='LOL')
-	print('cor2 = %s' % cor2.__dict__)
-	print('body.correspondence = %s' % body.get_payee().__dict__)
+def convert_message_for_direction(
+		logger: logging.Logger,
+		header: HeaderCreate,
+		body: BodyCreate,
+		is_correspondence_account: str
+):
+	logger.info('Преобразование сообщения к Выписке и Зачислению')
 
-	header_enrollment = json.loads(header.to_JSON())
-	header_extract = json.loads(header.to_JSON())
-	body_enrollment = json.loads(body.to_JSON())
-	body_extract = json.loads(body.to_JSON())
+	header_enrollment = copy.deepcopy(header)
+	header_extract = copy.deepcopy(header)
+
+	body_enrollment = BodyCreate(
+		kwargs = dict(
+			{
+				"__deepcopy__":   "True",
+				"payee":          body.get_payee(),
+				"payer":          body.get_payer(),
+				"operation":      body.get_operation(),
+				"correspondence": body.get_correspondence(),
+				"swiftTransfer":  body.get_swiftTransfer(),
+				"objectVersions": body.get_objectVersions()
+
+			}
+
+		)
+	)
+	body_extract = BodyCreate(
+		kwargs = dict(
+			{
+				"__deepcopy__":   "True",
+				"payee":          body.get_payee(),
+				"payer":          body.get_payer(),
+				"operation":      body.get_operation(),
+				"correspondence": body.get_correspondence(),
+				"swiftTransfer":  body.get_swiftTransfer(),
+				"objectVersions": body.get_objectVersions()
+
+			}
+
+		)
+	)
+
+	# header_enrollment = json.loads(header.to_JSON())
+	# header_extract = json.loads(header.to_JSON())
+	# body_enrollment = json.loads(body.to_JSON())
+	# body_extract = json.loads(body.to_JSON())
 
 	# Header enrollment
-	header_enrollment['sourceData'] = 'CREDITING-PAYMENT'
+	header_enrollment.set_sourceData('CREDITING-PAYMENT')
+	# header_enrollment['sourceData'] = 'CREDITING-PAYMENT'
 
 	# Header extract
-	header_extract.pop('srcModule')
-	header_extract.pop('evtId')
-	header_extract.pop('sndDate')
-	header_extract.pop('kindDoc')
-	header_extract.pop('accountType')
-	header_extract['sourceData'] = 'STATEMENT-LEGAL-ENTITY'
+	header_extract.set_srcModule(None)
+	header_extract.set_evtId(None)
+	header_extract.set_sndDate(None)
+	header_extract.set_kindDoc(None)
+	header_extract.set_accountType(None)
+	header_extract.set_sourceData('STATEMENT-LEGAL-ENTITY')
+	# header_extract.pop('srcModule')
+	# header_extract.pop('evtId')
+	# header_extract.pop('sndDate')
+	# header_extract.pop('kindDoc')
+	# header_extract.pop('accountType')
+	# header_extract['sourceData'] = 'STATEMENT-LEGAL-ENTITY'
 
 	# Body enrollment
-	body_enrollment['operation']['status'] = random.choice(['EXECUTED', 'REJECTED', 'SENT_EKS'])
-	body_enrollment['operation']['documentCurrency'] = None
-	body_enrollment['operation']['departmentCode'] = None
-	body_enrollment['payer']['kpp'] = None
-	body_enrollment['payee']['inn'] = None
-	body_enrollment['payee']['kpp'] = None
-	body_enrollment['payee']['bankBic'] = None
-	body_enrollment['payee']['bankName'] = None
-	body_enrollment['objectVersions'] = None
-	body_enrollment['swiftTransfer']['orderingInstitutionOption'] = None
+	body_enrollment.get_operation().set_status(random.choice(['EXECUTED', 'REJECTED', 'SENT_EKS']))
+	# body_enrollment['operation']['status'] = random.choice(['EXECUTED', 'REJECTED', 'SENT_EKS'])
+	body_enrollment.get_operation().set_documentCurrency(None)
+	# body_enrollment['operation']['documentCurrency'] = None
+	body_enrollment.get_operation().set_departmentCode(None)
+	# body_enrollment['operation']['departmentCode'] = None
+
+	body_enrollment.get_payer().set_kpp(None)
+	# body_enrollment['payer']['kpp'] = None
+	body_enrollment.get_payee().set_inn(None)
+	# body_enrollment['payee']['inn'] = None
+	body_enrollment.get_payee().set_kpp(None)
+	# body_enrollment['payee']['kpp'] = None
+	body_enrollment.get_payee().set_bankBIC(None)
+	# body_enrollment['payee']['bankBic'] = None
+	body_enrollment.get_payee().set_bankName(None)
+	# body_enrollment['payee']['bankName'] = None
+	body_enrollment.set_objectVersions(None)
+	# body_enrollment['objectVersions'] = None
+	body_enrollment.get_swiftTransfer().set_orderingInstitutionOption(None)
+	# body_enrollment['swiftTransfer']['orderingInstitutionOption'] = None
 	if is_correspondence_account == 'рандом':
 		if random.randint(0, 1) == 0:
-			body_enrollment['correspondence'] = None
+			body_enrollment.set_correspondence(None)
+	# body_enrollment['correspondence'] = None
 	elif is_correspondence_account == 'нет':
-		body_enrollment['correspondence'] = None
+		body_enrollment.set_correspondence(None)
+	# body_enrollment['correspondence'] = None
 
 	# Body extract
-	body_extract['operation']['status'] = body_extract['objectVersions']['docData']['action']
-	body_extract['operation']['documentCurrencyCode'] = None
-	body_extract['payee']['accountDigitalCurrencyCode'] = None
-	body_extract['payee']['accountCurrencyCode'] = None
-	body_extract['payee']['bankBic'] = None
-	body_extract['payee']['bankName'] = None
-	body_extract['correspondence'] = None
-	body_extract['swiftTransfer']['orderingCustomerINN'] = None
-	body_extract['swiftTransfer']['orderingInstitutionBIC'] = None
-	body_extract['swiftTransfer']['docNumber'] = None
-	body_extract['swiftTransfer']['docDate'] = None
+	body_extract.get_operation().set_status(body_extract.get_objectVersions().get_docData().get_action())
+	# body_extract['operation']['status'] = body_extract['objectVersions']['docData']['action']
+	body_extract.get_operation().set_documentCurrencyCode(None)
+	# body_extract['operation']['documentCurrencyCode'] = None
+	body_extract.get_payee().set_accountDigitalCurrencyCode(None)
+	# body_extract['payee']['accountDigitalCurrencyCode'] = None
+	body_extract.get_payee().set_accountCurrencyCode(None)
+	# body_extract['payee']['accountCurrencyCode'] = None
+	body_extract.get_payee().set_bankBIC(None)
+	# body_extract['payee']['bankBic'] = None
+	body_extract.get_payee().set_bankName(None)
+	# body_extract['payee']['bankName'] = None
+	body_extract.set_correspondence(None)
+	# body_extract['correspondence'] = None
+	body_extract.get_swiftTransfer().set_orderingCustomerINN(None)
+	# body_extract['swiftTransfer']['orderingCustomerINN'] = None
+	body_extract.get_swiftTransfer().set_orderingInstitutionBIC(None)
+	# body_extract['swiftTransfer']['orderingInstitutionBIC'] = None
+	body_extract.get_swiftTransfer().set_docNumber(None)
+	# body_extract['swiftTransfer']['docNumber'] = None
+	body_extract.get_swiftTransfer().set_docDate(None)
+	# body_extract['swiftTransfer']['docDate'] = None
 
-	# print('ENROLMENT HEADER = ', json.dumps(header_enrollment, indent=4, sort_keys=True, ensure_ascii=False))
-	# print('*'*30)
-	# print('EXTRACT HEADER = ', json.dumps(header_extract, indent=4, sort_keys=True, ensure_ascii=False))
-	# print('*'*30)
-	# print('ENROLMENT BODY = ', json.dumps(body_enrollment, indent=4, sort_keys=True, ensure_ascii=False))
-	# print('*'*30)
-	# print('EXTRACT BODY = ', json.dumps(body_extract, indent=4, sort_keys=True, ensure_ascii=False))
+	logger.debug('ENROLMENT HEADER = \n%s' % header_enrollment.to_JSON())
+	logger.debug('EXTRACT HEADER = \n%s' % header_extract.to_JSON())
+	logger.debug('ENROLMENT BODY = \n%s' % body_enrollment.to_JSON())
+	logger.debug('EXTRACT BODY = \n%s' % body_extract.to_JSON())
 	return header_enrollment, header_extract, body_enrollment, body_extract
 
 
@@ -375,6 +439,7 @@ def check_user_params(logger: logging.Logger) -> dict:
 def get_fields_for_update(logger: logging.Logger, param: str) -> List:
 	"""
 
+	:param param:
 	:param logger:
 	:return:
 	"""
@@ -463,7 +528,7 @@ def update_object_version(logger: logging.Logger, body: Dict, count_doc_data: in
 	return body
 
 
-def convert_message_to_update_delete(header: Dict, body: Dict, logger: logging.Logger) -> List:
+def convert_message_to_update_delete(header: HeaderCreate, body: BodyCreate, logger: logging.Logger) -> List:
 	messages: list = [{
 		'insert': {
 			'header': copy.deepcopy(header),
@@ -486,43 +551,11 @@ def convert_message_to_update_delete(header: Dict, body: Dict, logger: logging.L
 			else:
 				count_mt_currency_elements += 1
 
+
+
+
 			logger.info('UPDATE FIELD %s = %s' % (num, object_to_update))
-			try:
-				# Check object for update not empty
-				if object_to_update[1]:
 
-					# Update date
-					if object_to_update[1].__contains__('date') or object_to_update[1].__contains__('Date'):
-						body[object_to_update[0]][object_to_update[1]] = str(
-							faker.date_between(start_date = '-10d', end_date = 'now'))
-
-					# Change sum
-					elif object_to_update[1].__contains__('amount') or object_to_update[1].__contains__('Amount'):
-						body[object_to_update[0]][object_to_update[1]] = (
-								body[object_to_update[0]][object_to_update[1]] + random.randint(1, 1000))
-
-						# Change sum for payment in account currency
-						if object_to_update[0] in ('payer', 'payee') and object_to_update[1] == 'amount':
-							add_sum = random.randint(1, 1000)
-							if object_to_update[0] == 'payer':
-								body['payee'][object_to_update[1]] = body['payee'][object_to_update[1]] + add_sum
-							else:
-								body['payer'][object_to_update[1]] = body['payer'][object_to_update[1]] + add_sum
-
-					# Change voCode
-					elif object_to_update[1].__contains__('voCode'):
-						body[object_to_update[0]][object_to_update[1]] = random.randint(10000, 99999)
-
-					elif type(body[object_to_update[0]][object_to_update[1]]) == int:
-						body[object_to_update[0]][object_to_update[1]] += 10
-					elif body[object_to_update[0]][object_to_update[1]].isdigit():
-						body[object_to_update[0]][object_to_update[1]] = body[object_to_update[0]][object_to_update[1]][
-						                                                 ::-1]
-					else:
-						body[object_to_update[0]][object_to_update[1]] += '_update_%s' % num
-			except Exception as e:
-				logger.debug('body[object_to_update[0]][object_to_update[1]] = %s' % body)
-				logger.exception(e)
 		body = update_object_version(logger = logger, body = body, count_doc_data = count_doc_data_elements,
 		                             count_turn = count_turn_elements, count_mt_currency = count_mt_currency_elements)
 		messages.append(
@@ -794,7 +827,13 @@ if __name__ == '__main__':
 		payment_body_raw = BodyCreate(kwargs = item)
 
 		# Convert to format for sender system
-		result_enrollment_header, result_extract_header, result_enrollment_body, result_extract_body = convert_message_for_direction(
+		(
+			result_enrollment_header,
+			result_extract_header,
+			result_enrollment_body,
+			result_extract_body
+		) = convert_message_for_direction(
+			logger = logger,
 			header = payment_header_raw,
 			body = payment_body_raw,
 			is_correspondence_account = item['is_correspondence_account']
@@ -811,7 +850,7 @@ if __name__ == '__main__':
 			# save to result
 			save_result(
 				messages = (
-				result_enrollment_header, result_extract_header, result_enrollment_body, result_extract_body),
+					result_enrollment_header, result_extract_header, result_enrollment_body, result_extract_body),
 				sender_system = item['sender_system']
 			)
 	"""

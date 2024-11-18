@@ -1,16 +1,37 @@
+import copy
 import random
 
 from src.generated_data.body.abstract.swift_transfer import SwiftTransferAbstract
 
 
 class SwiftTransferCreate(SwiftTransferAbstract):
-	def __init__(self, customer_account: str, customer_name: str, customer_inn: str, customer_bank_name: str,
-	             customer_bank_swift: str, customer_bic: str, operation_purpose: str,
-	             document_date: str, document_number: str):
-		super().__init__(customer_account, customer_name, customer_inn, customer_bank_name, customer_bank_swift,
-		                 customer_bic, operation_purpose, document_number, document_date)
+	def __init__(self,
+	             counter_account: str,
+	             counter_name: str,
+	             counter_inn: str,
+	             counter_bank_name: str,
+	             counter_bank_swift: str,
+	             counter_bic: str,
+	             operation_purpose: str,
+	             document_date: str,
+	             document_number: str,
+	             option: str):
+		super().__init__(counter_account, counter_name, counter_inn, counter_bank_name, counter_bank_swift,
+		                 counter_bic, operation_purpose, document_number, document_date, option)
 
-		self.set_orderingInstitutionOption(random.choice(['A', 'B']))
+	def __deepcopy__(self, memo):
+		return SwiftTransferCreate(
+			counter_account = copy.deepcopy(self.get_orderingCustomerAccount(), memo = memo),
+			counter_name = copy.deepcopy(self.get_orderingCustomerName(), memo = memo),
+			counter_inn = copy.deepcopy(self.get_orderingCustomerINN(), memo = memo),
+			counter_bank_name = copy.deepcopy(self.get_orderingInstitutionName(), memo = memo),
+			counter_bank_swift = copy.deepcopy(self.get_orderingInstitutionSWIFT(), memo = memo),
+			counter_bic = copy.deepcopy(self.get_orderingInstitutionBIC(), memo = memo),
+			operation_purpose = copy.deepcopy(self.get_remittanceInformation(), memo = memo),
+			document_date = copy.deepcopy(self.get_docDate(), memo = memo),
+			document_number = copy.deepcopy(self.get_docNumber(), memo = memo),
+			option = copy.deepcopy(self.get_orderingInstitutionOption(), memo = memo)
+		)
 
 	def get_orderingCustomerAccount(self):
 		return self.orderingCustomerAccount

@@ -11,7 +11,7 @@ class BodyUpdate(BodyAbstract):
 	def __init__(self, **kwargs):
 
 		super().__init__(**kwargs)
-		kwargs = kwargs['kwargs']
+		# kwargs = kwargs['kwargs']
 		self.set_payee(copy.deepcopy(kwargs['payee']))
 		self.set_payer(copy.deepcopy(kwargs['payer']))
 		self.set_operation(copy.deepcopy(kwargs['operation']))

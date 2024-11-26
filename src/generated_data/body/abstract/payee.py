@@ -2,17 +2,18 @@ import abc
 
 
 class PayeeAbstract(abc.ABC):
-	def __init__(self,
-	             name: str,
-	             account: str,
-	             amount: str,
-	             account_digital_currency_code: str,
-	             account_currency_code: str,
-	             inn: str,
-	             kpp: str,
-	             bank_bic: str,
-	             bank_name: str
-	             ):
+	def __init__(
+			self,
+			name: str,
+			account: str,
+			amount: str,
+			account_digital_currency_code: str,
+			account_currency_code: str,
+			inn: str,
+			kpp: str,
+			bank_bic: str,
+			bank_name: str
+	):
 		self.name: str = name
 		self.account: str = account
 		self.amount: float = amount

@@ -3,17 +3,19 @@ import abc
 
 class SwiftTransferAbstract(abc.ABC):
 
-	def __init__(self,
-	             counter_account: str,
-	             counter_name: str,
-	             counter_inn: str,
-	             counter_bank_name: str,
-	             counter_bank_swift: str,
-	             counter_bic: str,
-	             operation_purpose: str,
-	             document_number: str,
-	             document_date: str,
-	             option: str):
+	def __init__(
+			self,
+			counter_account: str,
+			counter_name: str,
+			counter_inn: str,
+			counter_bank_name: str,
+			counter_bank_swift: str,
+			counter_bic: str,
+			operation_purpose: str,
+			document_number: str,
+			document_date: str,
+			option: str
+	):
 		self.orderingCustomerAccount: str = counter_account
 		self.orderingCustomerName: str = counter_name
 		self.orderingCustomerINN: str = counter_inn

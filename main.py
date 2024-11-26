@@ -6,6 +6,7 @@ from typing import Dict, Union, List
 from faker import Faker
 
 from src.generated_data.body.create.body import BodyCreate
+from src.generated_data.body.update.body import BodyUpdate
 from src.generated_data.header.create.header import HeaderCreate
 from config import config, user_config
 import json
@@ -371,7 +372,7 @@ def remove_result_dir(logger: logging.Logger):
 
 def write_to_file(message: dict, name: str):
 	with open('%s.json' % name, 'w') as file:
-		file.write(json.dumps(message, indent = 4, ensure_ascii = False))
+		file.write(message)
 
 
 def save_result(messages: tuple, sender_system: str):
@@ -510,21 +511,35 @@ def prepare_update_objects_from_user_config(logger: logging.Logger, param: str) 
 	return list_update_objects
 
 
-def update_object_version(logger: logging.Logger, body: Dict, count_doc_data: int, count_turn: int,
-                          count_mt_currency: int) -> Dict:
+def update_object_version(logger: logging.Logger, body: BodyUpdate, count_doc_data: int, count_turn: int,
+                          count_mt_currency: int) -> BodyUpdate:
 	logger.debug('count_doc_data = %s' % count_doc_data)
 	logger.debug('count_turn = %s' % count_turn)
 	logger.debug('count_mt_currency = %s' % count_mt_currency)
+	logger.debug('BodyUpdate = %s' % body.to_JSON())
 	if count_doc_data > 0:
-		body['objectVersions']['docData']['action'] = 'U'
-		body['objectVersions']['docData']['version'] += 1
-		body['operation']['status'] = 'U'
+		body.get_objectVersions().get_docData().set_action('U')
+		body.get_objectVersions().get_docData().set_version(
+			body.get_objectVersions().get_docData().get_version() + 1
+		)
+		body.get_operation().set_status('U')
+	# body['objectVersions']['docData']['action'] = 'U'
+	# body['objectVersions']['docData']['version'] += 1
+	# body['operation']['status'] = 'U'
 	if count_turn > 0:
-		body['objectVersions']['turn']['action'] = 'U'
-		body['objectVersions']['turn']['version'] += 1
+		body.get_objectVersions().get_turn().set_action('U')
+		body.get_objectVersions().get_turn().set_version(
+			body.get_objectVersions().get_turn().get_version() + 1
+		)
+	# body['objectVersions']['turn']['action'] = 'U'
+	# body['objectVersions']['turn']['version'] += 1
 	if count_mt_currency > 0:
-		body['objectVersions']['mtCurrency']['action'] = 'U'
-		body['objectVersions']['mtCurrency']['version'] += 1
+		body.get_objectVersions().get_mtCurrency().set_action('U')
+		body.get_objectVersions().get_mtCurrency().set_version(
+			body.get_objectVersions().get_mtCurrency().get_version() + 1
+		)
+	# body['objectVersions']['mtCurrency']['action'] = 'U'
+	# body['objectVersions']['mtCurrency']['version'] += 1
 	return body
 
 
@@ -535,7 +550,9 @@ def convert_message_to_update_delete(header: HeaderCreate, body: BodyCreate, log
 			'body':   copy.deepcopy(body)
 		}
 	}]
+	logger.debug('Insert = %s' % messages)
 	faker = Faker()
+	body_update = None
 	# Two updates
 	for num in range(2):
 		list_update_objects = get_fields_for_update(logger = logger, param = 'first' if num == 0 else 'second')
@@ -543,21 +560,31 @@ def convert_message_to_update_delete(header: HeaderCreate, body: BodyCreate, log
 		count_doc_data_elements = 0
 		count_turn_elements = 0
 		count_mt_currency_elements = 0
+		body = BodyUpdate(
+			payee = copy.deepcopy(body.get_payee()),
+			payer = copy.deepcopy(body.get_payer()),
+			objectVersions = copy.deepcopy(body.get_objectVersions()),
+			operation = copy.deepcopy(body.get_operation()),
+			swiftTransfer = copy.deepcopy(body.get_swiftTransfer())
+		)
 		for object_to_update in list_update_objects:
 			if '%s.%s' % (object_to_update[0], object_to_update[1]) in config.list_doc_data_keys:
 				count_doc_data_elements += 1
+				setattr(getattr(body, object_to_update[0]), 'update_%s')
 			elif '%s.%s' % (object_to_update[0], object_to_update[1]) in config.list_turn_keys:
 				count_turn_elements += 1
 			else:
 				count_mt_currency_elements += 1
 
-
-
-
 			logger.info('UPDATE FIELD %s = %s' % (num, object_to_update))
 
-		body = update_object_version(logger = logger, body = body, count_doc_data = count_doc_data_elements,
-		                             count_turn = count_turn_elements, count_mt_currency = count_mt_currency_elements)
+		body = update_object_version(
+			logger = logger,
+			body = body,
+			count_doc_data = count_doc_data_elements,
+			count_turn = count_turn_elements,
+			count_mt_currency = count_mt_currency_elements
+		)
 		messages.append(
 			{
 				'update': {
@@ -566,9 +593,17 @@ def convert_message_to_update_delete(header: HeaderCreate, body: BodyCreate, log
 				}
 			}
 		)
-	body['operation']['status'] = 'D'
-	body['objectVersions']['docData']['action'] = 'D'
-	body['objectVersions']['docData']['version'] += 1
+		logger.info('Update %s = %s' % (num, messages))
+
+	logger.debug('Body type = %s' % type(body))
+	body.get_operation().set_status('D')
+	body.get_objectVersions().get_docData().set_action('D')
+	body.get_objectVersions().get_docData().set_version(
+		body.get_objectVersions().get_docData().get_version() + 1
+	)
+	# body['operation']['status'] = 'D'
+	# body['objectVersions']['docData']['action'] = 'D'
+	# body['objectVersions']['docData']['version'] += 1
 	messages.append(
 		{
 			'delete': {
@@ -577,7 +612,7 @@ def convert_message_to_update_delete(header: HeaderCreate, body: BodyCreate, log
 			}
 		}
 	)
-	logger.debug('MESSAGES = %s' % json.dumps(messages, indent = 4, ensure_ascii = False))
+	# logger.debug('MESSAGES = %s' % json.dumps(messages, indent = 4, ensure_ascii = False))
 	return messages
 
 
@@ -586,36 +621,37 @@ def save_result_update_delete(messages: dict):
 		os.path.join(
 			os.getcwd(),
 			config.directory_to_save,
-			messages[0]['insert']['header']['sendServiceId'],
+			messages[0]['insert']['header'].get_sendServiceId(),
 			'insert'
 		)
 	)
-	os.makedirs(os.path.join(os.getcwd(), config.directory_to_save, messages[0]['insert']['header']['sendServiceId'],
+	os.makedirs(os.path.join(os.getcwd(), config.directory_to_save, messages[0]['insert']['header'].get_sendServiceId(),
 	                         'update_1'))
-	os.makedirs(os.path.join(os.getcwd(), config.directory_to_save, messages[0]['insert']['header']['sendServiceId'],
+	os.makedirs(os.path.join(os.getcwd(), config.directory_to_save, messages[0]['insert']['header'].get_sendServiceId(),
 	                         'update_2'))
 	os.makedirs(
-		os.path.join(os.getcwd(), config.directory_to_save, messages[0]['insert']['header']['sendServiceId'], 'delete'))
+		os.path.join(os.getcwd(), config.directory_to_save, messages[0]['insert']['header'].get_sendServiceId(),
+		             'delete'))
 
 	write_to_file(
-		message = messages[0]['insert']['header'],
+		message = messages[0]['insert']['header'].to_JSON(),
 		name = os.path.join(
 			os.path.join(
 				os.getcwd(),
 				config.directory_to_save,
-				messages[0]['insert']['header']['sendServiceId'],
+				messages[0]['insert']['header'].get_sendServiceId(),
 				'insert',
 				'header'
 			)
 		)
 	)
 	write_to_file(
-		message = messages[0]['insert']['body'],
+		message = messages[0]['insert']['body'].to_JSON(),
 		name = os.path.join(
 			os.path.join(
 				os.getcwd(),
 				config.directory_to_save,
-				messages[0]['insert']['header']['sendServiceId'],
+				messages[0]['insert']['header'].get_sendServiceId(),
 				'insert',
 				'body'
 			)
@@ -623,24 +659,24 @@ def save_result_update_delete(messages: dict):
 	)
 
 	write_to_file(
-		message = messages[1]['update']['header'],
+		message = messages[1]['update']['header'].to_JSON(),
 		name = os.path.join(
 			os.path.join(
 				os.getcwd(),
 				config.directory_to_save,
-				messages[0]['insert']['header']['sendServiceId'],
+				messages[0]['insert']['header'].get_sendServiceId(),
 				'update_1',
 				'header'
 			)
 		)
 	)
 	write_to_file(
-		message = messages[1]['update']['body'],
+		message = messages[1]['update']['body'].to_JSON(),
 		name = os.path.join(
 			os.path.join(
 				os.getcwd(),
 				config.directory_to_save,
-				messages[0]['insert']['header']['sendServiceId'],
+				messages[0]['insert']['header'].get_sendServiceId(),
 				'update_1',
 				'body'
 			)
@@ -648,24 +684,24 @@ def save_result_update_delete(messages: dict):
 	)
 
 	write_to_file(
-		message = messages[2]['update']['header'],
+		message = messages[2]['update']['header'].to_JSON(),
 		name = os.path.join(
 			os.path.join(
 				os.getcwd(),
 				config.directory_to_save,
-				messages[0]['insert']['header']['sendServiceId'],
+				messages[0]['insert']['header'].get_sendServiceId(),
 				'update_2',
 				'header'
 			)
 		)
 	)
 	write_to_file(
-		message = messages[2]['update']['body'],
+		message = messages[2]['update']['body'].to_JSON(),
 		name = os.path.join(
 			os.path.join(
 				os.getcwd(),
 				config.directory_to_save,
-				messages[0]['insert']['header']['sendServiceId'],
+				messages[0]['insert']['header'].get_sendServiceId(),
 				'update_2',
 				'body'
 			)
@@ -673,24 +709,24 @@ def save_result_update_delete(messages: dict):
 	)
 
 	write_to_file(
-		message = messages[3]['delete']['header'],
+		message = messages[3]['delete']['header'].to_JSON(),
 		name = os.path.join(
 			os.path.join(
 				os.getcwd(),
 				config.directory_to_save,
-				messages[0]['insert']['header']['sendServiceId'],
+				messages[0]['insert']['header'].get_sendServiceId(),
 				'delete',
 				'header'
 			)
 		)
 	)
 	write_to_file(
-		message = messages[3]['delete']['body'],
+		message = messages[3]['delete']['body'].to_JSON(),
 		name = os.path.join(
 			os.path.join(
 				os.getcwd(),
 				config.directory_to_save,
-				messages[0]['insert']['header']['sendServiceId'],
+				messages[0]['insert']['header'].get_sendServiceId(),
 				'delete',
 				'body'
 			)
